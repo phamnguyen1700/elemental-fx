@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { ELEMENTAL_FX_VERSION } from "../version";
 import { getEffectDefinition } from "./effects";
 
 describe("effect registry", () => {
@@ -7,7 +8,9 @@ describe("effect registry", () => {
     const effect = getEffectDefinition("water-surface");
 
     expect(effect.fileName).toBe("water-surface.tsx");
-    expect(effect.dependencies).toEqual(["@elemental-fx/canvas-effects"]);
+    expect(effect.dependencies).toEqual([
+      `@elemental-fx/canvas-effects@${ELEMENTAL_FX_VERSION}`,
+    ]);
     expect(effect.template()).toContain("createWaterSurfaceEffect");
   });
 
@@ -15,7 +18,9 @@ describe("effect registry", () => {
     const effect = getEffectDefinition("ink-cursor");
 
     expect(effect.fileName).toBe("ink-cursor.tsx");
-    expect(effect.dependencies).toEqual(["@elemental-fx/fluid-effects"]);
+    expect(effect.dependencies).toEqual([
+      `@elemental-fx/fluid-effects@${ELEMENTAL_FX_VERSION}`,
+    ]);
     expect(effect.template()).toContain("createInkCursorEffect");
   });
 });
