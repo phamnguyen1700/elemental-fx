@@ -1,8 +1,21 @@
 {
   "name": "elemental-fx",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "CLI for adding elemental-fx effect layers to consumer projects.",
+  "license": "MIT",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/phamnguyen1700/elemental-fx.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/phamnguyen1700/elemental-fx#readme",
+  "bugs": {
+    "url": "https://github.com/phamnguyen1700/elemental-fx/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  },
   "bin": {
     "elemental-fx": "./dist/index.js"
   },
@@ -23,5 +36,8 @@
     "build": "tsup src/index.ts --format esm,cjs --dts --clean",
     "clean": "rimraf dist",
     "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

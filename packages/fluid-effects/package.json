@@ -1,9 +1,19 @@
 {
   "name": "@elemental-fx/fluid-effects",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Reusable WebGL fluid effects and React wrappers for elemental-fx.",
+  "license": "MIT",
   "type": "module",
   "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/phamnguyen1700/elemental-fx.git",
+    "directory": "packages/fluid-effects"
+  },
+  "homepage": "https://github.com/phamnguyen1700/elemental-fx#readme",
+  "bugs": {
+    "url": "https://github.com/phamnguyen1700/elemental-fx/issues"
+  },
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -29,5 +39,13 @@
   },
   "peerDependencies": {
     "react": ">=18.2.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

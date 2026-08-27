@@ -1,10 +1,18 @@
 {
   "name": "elemental-fx-workspace",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "license": "MIT",
   "description": "A personal reusable foundation for design tokens, Canvas 2D effects, and WebGL fluid effects.",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/phamnguyen1700/elemental-fx.git"
+  },
+  "homepage": "https://github.com/phamnguyen1700/elemental-fx#readme",
+  "bugs": {
+    "url": "https://github.com/phamnguyen1700/elemental-fx/issues"
+  },
   "workspaces": [
     "packages/*",
     "examples/*"
@@ -37,9 +45,5 @@
     "typescript-eslint": "^8.0.0",
     "vite": "^7.0.0",
     "vitest": "^3.0.0"
-  },
-  "peerDependencies": {
-    "react": ">=18.2.0",
-    "react-dom": ">=18.2.0"
   }
 }

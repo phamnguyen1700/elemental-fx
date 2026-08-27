@@ -7,19 +7,23 @@ Reusable WebGL fluid effects for elemental-fx, with framework-free APIs and opti
 ```bash
 npm install @elemental-fx/fluid-effects
 ```
-Framework-free usage
-```bash
+
+## Framework-free usage
+
+```ts
 import { createInkCursorEffect } from "@elemental-fx/fluid-effects";
 
 const canvas = document.querySelector("canvas");
 
 const effect = createInkCursorEffect(canvas, {
   color: "hsl(222 22% 9%)",
-  curl: 28,
+  curl: 28
 });
 ```
-React
-```bash
+
+## React
+
+```tsx
 import { InkCursor } from "@elemental-fx/fluid-effects/react";
 
 export function Background() {
@@ -30,6 +34,13 @@ export function Background() {
   );
 }
 ```
+
 Requires WebGL 2 support.
-Repository
+
+## Repository
+
 elemental-fx is developed as a monorepo containing Canvas, WebGL fluid, and CLI packages.
+
+## License
+
+MIT

@@ -8,19 +8,22 @@ Reusable Canvas 2D effects for elemental-fx, with framework-free APIs and option
 npm install @elemental-fx/canvas-effects
 ```
 
-Framework-free usage
-```bash
+## Framework-free usage
+
+```ts
 import { createWaterSurfaceEffect } from "@elemental-fx/canvas-effects";
 
 const canvas = document.querySelector("canvas");
 
 const effect = createWaterSurfaceEffect(canvas, {
   color: "hsl(193 67% 36%)",
-  clickStrength: 10,
+  clickStrength: 10
 });
 ```
-React
-```bash
+
+## React
+
+```tsx
 import { WaterSurface } from "@elemental-fx/canvas-effects/react";
 
 export function Hero() {
@@ -31,5 +34,11 @@ export function Hero() {
   );
 }
 ```
-Repository
+
+## Repository
+
 elemental-fx is developed as a monorepo containing Canvas, WebGL fluid, and CLI packages.
+
+## License
+
+MIT
