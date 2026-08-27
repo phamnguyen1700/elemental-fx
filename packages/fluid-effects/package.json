@@ -1,6 +1,6 @@
 {
   "name": "@elemental-fx/fluid-effects",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Reusable WebGL fluid effects and React wrappers for elemental-fx.",
   "type": "module",
   "sideEffects": false,

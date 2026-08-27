@@ -1,6 +1,6 @@
 {
   "name": "@elemental-fx/canvas-effects",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Reusable Canvas 2D effects and React wrappers for elemental-fx.",
   "type": "module",
   "sideEffects": false,

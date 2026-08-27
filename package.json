@@ -1,6 +1,6 @@
 {
   "name": "elemental-fx-workspace",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "license": "MIT",
   "description": "A personal reusable foundation for design tokens, Canvas 2D effects, and WebGL fluid effects.",
@@ -21,7 +21,6 @@
     "typecheck": "tsc -p tsconfig.json --noEmit && npm run typecheck --workspaces --if-present",
     "version:sync": "node scripts/sync-version.mjs"
   },
-  
   "devDependencies": {
     "@eslint/js": "^9.0.0",
     "@types/node": "^22.0.0",
