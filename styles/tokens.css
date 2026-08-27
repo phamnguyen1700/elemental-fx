@@ -1,0 +1,60 @@
+:root {
+  color-scheme: light;
+
+  --efx-color-background: 0 0% 100%;
+  --efx-color-foreground: 0 0% 4%;
+  --efx-color-muted: 0 0% 96%;
+  --efx-color-muted-foreground: 0 0% 45%;
+  --efx-color-border: 0 0% 90%;
+
+  --efx-color-primary: 0 0% 8%;
+  --efx-color-primary-foreground: 0 0% 100%;
+  --efx-color-danger: 0 0% 8%;
+  --efx-color-danger-foreground: 0 0% 100%;
+
+  --efx-color-effect-primary: 0 0% 8%;
+  --efx-color-effect-secondary: 0 0% 100%;
+  --efx-color-effect-muted: 0 0% 62%;
+
+  --efx-space-1: 0.25rem;
+  --efx-space-2: 0.5rem;
+  --efx-space-3: 0.75rem;
+  --efx-space-4: 1rem;
+  --efx-space-6: 1.5rem;
+  --efx-space-8: 2rem;
+
+  --efx-radius-sm: 0.375rem;
+  --efx-radius-md: 0.5rem;
+  --efx-radius-lg: 0.75rem;
+  --efx-radius-card: var(--efx-radius-lg);
+
+  --efx-shadow-soft: 0 10px 30px hsl(0 0% 4% / 0.08);
+  --efx-shadow-glow: 0 0 32px hsl(var(--efx-color-primary) / 0.32);
+
+  --efx-duration-fast: 120ms;
+  --efx-duration-normal: 220ms;
+  --efx-duration-slow: 420ms;
+  --efx-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --efx-color-background: 0 0% 4%;
+  --efx-color-foreground: 0 0% 98%;
+  --efx-color-muted: 0 0% 12%;
+  --efx-color-muted-foreground: 0 0% 64%;
+  --efx-color-border: 0 0% 18%;
+
+  --efx-color-primary: 0 0% 98%;
+  --efx-color-primary-foreground: 0 0% 4%;
+  --efx-color-danger: 0 0% 98%;
+  --efx-color-danger-foreground: 0 0% 4%;
+
+  --efx-color-effect-primary: 0 0% 98%;
+  --efx-color-effect-secondary: 0 0% 8%;
+  --efx-color-effect-muted: 0 0% 56%;
+
+  --efx-shadow-soft: 0 10px 30px hsl(0 0% 0% / 0.28);
+  --efx-shadow-glow: 0 0 36px hsl(var(--efx-color-primary) / 0.4);
+}
