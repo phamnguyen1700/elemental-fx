@@ -94,6 +94,7 @@ function parseAddArgs(argv: string[]): AddOptions | null {
 function printAddHelp(): void {
   console.log(`Usage:
   elemental-fx add water-surface
+  elemental-fx add sand-surface
   elemental-fx add ink-cursor
   elemental-fx add water-surface --path src/components/effects
   elemental-fx add water-surface --dry-run

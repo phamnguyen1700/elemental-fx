@@ -1,6 +1,7 @@
 import { ELEMENTAL_FX_VERSION } from "../version";
-import { inkCursorTemplate } from "./templates/ink-cursor";
-import { waterSurfaceTemplate } from "./templates/water-surface";
+import { inkCursorTemplate } from "./templates/ink-cursor/react-layer";
+import { sandSurfaceTemplate } from "./templates/sand-surface/react-layer";
+import { waterSurfaceTemplate } from "./templates/water-surface/react-layer";
 
 export interface EffectDefinition {
   name: string;
@@ -14,15 +15,22 @@ const EFFECTS: Record<string, EffectDefinition> = {
     name: "water-surface",
     fileName: "water-surface.tsx",
     dependencies: [`@elemental-fx/canvas-effects@${ELEMENTAL_FX_VERSION}`],
-    template: waterSurfaceTemplate,
+    template: waterSurfaceTemplate
+  },
+
+  "sand-surface": {
+    name: "sand-surface",
+    fileName: "sand-surface.tsx",
+    dependencies: [`@elemental-fx/canvas-effects@${ELEMENTAL_FX_VERSION}`],
+    template: sandSurfaceTemplate
   },
 
   "ink-cursor": {
     name: "ink-cursor",
     fileName: "ink-cursor.tsx",
     dependencies: [`@elemental-fx/fluid-effects@${ELEMENTAL_FX_VERSION}`],
-    template: inkCursorTemplate,
-  },
+    template: inkCursorTemplate
+  }
 };
 
 export function getEffectDefinition(name: string): EffectDefinition {

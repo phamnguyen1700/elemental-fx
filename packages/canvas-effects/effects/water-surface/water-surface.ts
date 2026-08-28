@@ -1,8 +1,8 @@
-import { createCanvasEngine, type CanvasViewport } from "../core/canvas-engine";
-import { parseCssColor, resolveCssColor, type RgbaColor } from "../core/color";
-import { createPointerTracker, type PointerState } from "../core/pointer";
-import { createWaveGrid, type WaveGrid } from "../engines/wave-grid";
-import type { EffectHandle } from "./types";
+import { createCanvasEngine, type CanvasViewport } from "../../core/canvas-engine";
+import { parseCssColor, resolveCssColor, type RgbaColor } from "../../core/color";
+import { createPointerTracker, type PointerState } from "../../core/pointer";
+import { createWaveGrid, type WaveGrid } from "../../engines/wave-grid";
+import type { EffectHandle } from "../types";
 
 export interface WaterSurfaceConfig {
   color?: string;

@@ -1,4 +1,4 @@
-import { FULLSCREEN_VERTEX_SHADER } from "./shaders/base";
+import { FULLSCREEN_VERTEX_SHADER } from "../../core/shaders/base";
 import {
   ADVECTION_SHADER,
   CLEAR_SHADER,
@@ -9,7 +9,7 @@ import {
   PRESSURE_SHADER,
   SPLAT_SHADER,
   VORTICITY_SHADER
-} from "./shaders/simulation";
+} from "../../core/shaders/simulation";
 import {
   blit,
   createDoubleRenderTarget,
@@ -18,8 +18,8 @@ import {
   type DoubleRenderTarget,
   type GlProgram,
   type RenderTarget
-} from "./webgl";
-import type { FluidColor } from "./color";
+} from "../../core/webgl";
+import type { FluidColor } from "../../core/color";
 
 export interface FluidSimulationConfig {
   simulationResolution: number;

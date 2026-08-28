@@ -8,9 +8,7 @@ describe("effect registry", () => {
     const effect = getEffectDefinition("water-surface");
 
     expect(effect.fileName).toBe("water-surface.tsx");
-    expect(effect.dependencies).toEqual([
-      `@elemental-fx/canvas-effects@${ELEMENTAL_FX_VERSION}`,
-    ]);
+    expect(effect.dependencies).toEqual([`@elemental-fx/canvas-effects@${ELEMENTAL_FX_VERSION}`]);
     expect(effect.template()).toContain("createWaterSurfaceEffect");
   });
 
@@ -18,9 +16,15 @@ describe("effect registry", () => {
     const effect = getEffectDefinition("ink-cursor");
 
     expect(effect.fileName).toBe("ink-cursor.tsx");
-    expect(effect.dependencies).toEqual([
-      `@elemental-fx/fluid-effects@${ELEMENTAL_FX_VERSION}`,
-    ]);
+    expect(effect.dependencies).toEqual([`@elemental-fx/fluid-effects@${ELEMENTAL_FX_VERSION}`]);
     expect(effect.template()).toContain("createInkCursorEffect");
+  });
+
+  it("returns sand-surface metadata", () => {
+    const effect = getEffectDefinition("sand-surface");
+
+    expect(effect.fileName).toBe("sand-surface.tsx");
+    expect(effect.dependencies).toEqual([`@elemental-fx/canvas-effects@${ELEMENTAL_FX_VERSION}`]);
+    expect(effect.template()).toContain("createSandSurfaceEffect");
   });
 });

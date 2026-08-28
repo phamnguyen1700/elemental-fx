@@ -1,7 +1,7 @@
 import { forwardRef, useMemo, type CanvasHTMLAttributes, type ReactElement } from "react";
 
-import { createInkCursorEffect, type InkCursorConfig } from "../../presets/ink";
-import { FluidEffect } from "../primitives/FluidEffect";
+import { createInkCursorEffect, type InkCursorConfig } from "../../../presets/ink-cursor";
+import { FluidEffect } from "../../primitives/FluidEffect";
 
 export interface InkCursorProps
   extends

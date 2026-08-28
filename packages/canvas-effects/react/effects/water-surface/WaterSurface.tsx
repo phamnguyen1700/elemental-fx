@@ -1,7 +1,7 @@
 import { forwardRef, useMemo, type CanvasHTMLAttributes, type ReactElement } from "react";
 
-import { createWaterSurfaceEffect, type WaterSurfaceConfig } from "../../effects/water-surface";
-import { CanvasEffect } from "../primitives/CanvasEffect";
+import { createWaterSurfaceEffect, type WaterSurfaceConfig } from "../../../effects/water-surface";
+import { CanvasEffect } from "../../primitives/CanvasEffect";
 
 export interface WaterSurfaceProps
   extends WaterSurfaceConfig, Omit<CanvasHTMLAttributes<HTMLCanvasElement>, "children" | "color"> {

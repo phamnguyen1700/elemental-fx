@@ -24,6 +24,7 @@ Usage:
 
 Effects:
   water-surface
+  sand-surface
   ink-cursor
 
 Options:

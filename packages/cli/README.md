@@ -6,6 +6,7 @@ CLI for adding local elemental-fx effect layers to React, Next, and Vite project
 
 ```bash
 npx elemental-fx add water-surface
+npx elemental-fx add sand-surface
 npx elemental-fx add ink-cursor
 ```
 
@@ -13,6 +14,7 @@ Generated files are local React layer components. They render a canvas and call 
 
 ```txt
 src/components/effects/water-surface.tsx
+src/components/effects/sand-surface.tsx
 src/components/effects/ink-cursor.tsx
 ```
 

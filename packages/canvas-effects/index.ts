@@ -14,6 +14,13 @@ export {
   type PointerTracker,
   type PointerTrackerOptions
 } from "./core/pointer";
+export {
+  createGranularField,
+  type GranularField,
+  type GranularFieldConfig,
+  type GranularFieldState
+} from "./engines/granular-field";
 export { createWaveGrid, type WaveGrid, type WaveGridConfig } from "./engines/wave-grid";
+export { createSandSurfaceEffect, type SandSurfaceConfig } from "./effects/sand-surface";
 export { createWaterSurfaceEffect, type WaterSurfaceConfig } from "./effects/water-surface";
 export type { EffectFactory, EffectHandle } from "./effects/types";

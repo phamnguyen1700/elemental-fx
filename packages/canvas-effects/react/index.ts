@@ -1,1 +1,2 @@
-export { WaterSurface, type WaterSurfaceProps } from "./effects/WaterSurface";
+export { SandSurface, type SandSurfaceProps } from "./effects/sand-surface";
+export { WaterSurface, type WaterSurfaceProps } from "./effects/water-surface";

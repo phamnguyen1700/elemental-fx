@@ -21,15 +21,26 @@ const effect = createWaterSurfaceEffect(canvas, {
 });
 ```
 
+```ts
+import { createSandSurfaceEffect } from "@elemental-fx/canvas-effects";
+
+const sand = createSandSurfaceEffect(canvas, {
+  dragRadius: 8,
+  duneHeight: 8,
+  pressStrength: 8
+});
+```
+
 ## React
 
 ```tsx
-import { WaterSurface } from "@elemental-fx/canvas-effects/react";
+import { SandSurface, WaterSurface } from "@elemental-fx/canvas-effects/react";
 
 export function Hero() {
   return (
     <div style={{ width: "100%", height: 500 }}>
       <WaterSurface color="hsl(193 67% 36%)" />
+      <SandSurface dragRadius={8} duneHeight={8} />
     </div>
   );
 }

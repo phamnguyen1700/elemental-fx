@@ -1,12 +1,12 @@
-import { resolveFluidColor, type FluidColor } from "../core/color";
+import { resolveFluidColor, type FluidColor } from "../../core/color";
 import {
   createFluidSimulation,
   type FluidSimulation,
   type FluidSimulationConfig
-} from "../core/simulation";
-import { createWebGLEngine, type WebGLEngine, type WebGLViewport } from "../core/webgl-engine";
-import { createFluidPointerTracker, type FluidPointerState } from "../core/pointer";
-import type { FluidEffectHandle } from "../effects";
+} from "../../engines/fluid-simulation";
+import { createWebGLEngine, type WebGLEngine, type WebGLViewport } from "../../core/webgl";
+import { createFluidPointerTracker, type FluidPointerState } from "../../core/pointer";
+import type { FluidEffectHandle } from "../../effects";
 
 export interface InkCursorConfig extends Partial<FluidSimulationConfig> {
   color?: string;

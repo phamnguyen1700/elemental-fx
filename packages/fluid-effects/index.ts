@@ -11,7 +11,7 @@ export {
   type FluidResolution,
   type FluidSimulation,
   type FluidSimulationConfig
-} from "./core/simulation";
+} from "./engines/fluid-simulation";
 export {
   createWebGLEngine,
   type WebGLEngine,
@@ -19,6 +19,6 @@ export {
   type WebGLEngineOptions,
   type WebGLFrame,
   type WebGLViewport
-} from "./core/webgl-engine";
-export { createInkCursorEffect, type InkCursorConfig } from "./presets/ink";
+} from "./core/webgl";
+export { createInkCursorEffect, type InkCursorConfig } from "./presets/ink-cursor";
 export type { FluidEffectFactory, FluidEffectHandle } from "./effects";

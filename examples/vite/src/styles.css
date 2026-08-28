@@ -75,7 +75,7 @@ h2 {
 
 .effect-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
 }
 
@@ -124,6 +124,10 @@ h2 {
   background: hsl(190 48% 86%);
 }
 
+.sand-stage {
+  background: hsl(39 52% 59%);
+}
+
 .ink-stage {
   background:
     linear-gradient(hsl(0 0% 88% / 0.35) 1px, transparent 1px),
@@ -144,6 +148,12 @@ h2 {
   font-size: 13px;
   line-height: 1.5;
   transform: translate(-50%, -50%);
+}
+
+@media (max-width: 1120px) {
+  .effect-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 820px) {

@@ -5,18 +5,20 @@ A reusable React and TypeScript foundation for interactive Canvas 2D and WebGL e
 ## Implemented Effects
 
 - `WaterSurface`: Canvas 2D height-field waves with hover impulses and click ripples.
+- `SandSurface`: Canvas 2D dune height field with mass-displacing trails and granular settling.
 - `InkCursor`: WebGL 2 stable-fluid simulation with configurable ink splats.
 
 The framework-free factories are available from each package root. React wrappers are separate entry points so engine code stays independent from React.
 
 ```tsx
-import { WaterSurface } from "@elemental-fx/canvas-effects/react";
+import { SandSurface, WaterSurface } from "@elemental-fx/canvas-effects/react";
 import { InkCursor } from "@elemental-fx/fluid-effects/react";
 
 export function Effects() {
   return (
     <>
       <WaterSurface color="hsl(193 67% 36%)" clickStrength={10} />
+      <SandSurface dragRadius={8} duneHeight={8} pressStrength={8} />
       <InkCursor color="hsl(222 22% 9%)" curl={28} />
     </>
   );
@@ -31,6 +33,7 @@ For project-level customization, use the hybrid CLI flow. The CLI creates a loca
 
 ```bash
 npx elemental-fx add water-surface
+npx elemental-fx add sand-surface
 npx elemental-fx add ink-cursor
 ```
 
@@ -38,6 +41,7 @@ Generated files:
 
 ```txt
 src/components/effects/water-surface.tsx
+src/components/effects/sand-surface.tsx
 src/components/effects/ink-cursor.tsx
 ```
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { getFluidResolution } from "./simulation";
+import { getFluidResolution } from "./fluid-simulation";
 
 describe("fluid resolution", () => {
   it("preserves landscape aspect ratio", () => {

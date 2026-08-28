@@ -1,1 +1,1 @@
-export { InkCursor, type InkCursorProps } from "./effects/InkCursor";
+export { InkCursor, type InkCursorProps } from "./effects/ink-cursor";
