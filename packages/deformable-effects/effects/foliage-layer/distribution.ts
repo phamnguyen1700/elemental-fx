@@ -1,6 +1,10 @@
 import type { ResourceSet } from "../../core/resources";
 import type { Node } from "../../engines/constraint-graph";
-import type { VineBranch, VineGrowthNode, VineGrowthResult } from "../../topologies";
+import type {
+  VineBranch,
+  VineGrowthNode,
+  VineGrowthResult,
+} from "../../topologies";
 import type { ResolvedVineAssets } from "./assets";
 import type {
   VineAsset,
@@ -22,28 +26,37 @@ export function buildVineDistribution(
   assets: ResolvedVineAssets,
   config: VineDistributionConfig,
   density = 1,
+  hangingStrands: ReadonlyArray<ReadonlyArray<Node>> = [],
 ): VineDistribution {
   const structural = buildStructuralSkin(vine, assets, config);
   const instances = [...structural];
 
   // Structural skin is never truncated; the configured budget limits optional attachments.
-  const maxInstances = Math.max(structural.length, Math.floor(config.maxInstances));
+  const maxInstances = Math.max(
+    structural.length,
+    Math.floor(config.maxInstances),
+  );
   for (const growthNode of vine.growthNodes) {
-    appendMainNodeAttachments(instances, maxInstances, growthNode, assets, config);
+    appendMainNodeAttachments(
+      instances,
+      maxInstances,
+      growthNode,
+      assets,
+      config,
+    );
     if (instances.length >= maxInstances) break;
   }
 
-  if (instances.length < maxInstances) {
-    appendSecondaryNodeAttachments(
+  if (instances.length < maxInstances && hangingStrands.length > 0) {
+    appendHangingAttachments(
       instances,
       maxInstances,
-      vine.branches,
+      hangingStrands,
       assets,
       config,
       density,
     );
   }
-
   instances.sort((left, right) => resolveDepth(left) - resolveDepth(right));
   return { instances, structuralCount: structural.length };
 }
@@ -76,26 +89,6 @@ function buildStructuralSkin(
       );
     }
   });
-
-  for (const branch of vine.branches) {
-    for (let segmentIndex = 0; segmentIndex < branch.nodes.length - 1; segmentIndex++) {
-      instances.push(
-        createStructuralInstance(
-          instances.length,
-          "secondary",
-          branch.pathIndex,
-          branch.id,
-          branch.growthNodeId,
-          segmentIndex,
-          branch.nodes[segmentIndex]!,
-          branch.nodes[segmentIndex + 1]!,
-          assets,
-          config,
-        ),
-      );
-    }
-  }
-
   return instances;
 }
 
@@ -111,12 +104,17 @@ function createStructuralInstance(
   assets: ResolvedVineAssets,
   config: VineDistributionConfig,
 ): VineRenderInstance {
-  const sampleIndex = role === "main" ? pathIndex * 4096 + segmentIndex : 1_000_000 + id;
+  const sampleIndex =
+    role === "main" ? pathIndex * 4096 + segmentIndex : 1_000_000 + id;
   const sample = (channel: number) =>
     organicSample(config.seed + 101, sampleIndex, channel, config.variation);
   const resource = assets.branches.pick(sample(1));
   if (!resource) throw new Error("No branch resource is available.");
-  const crossScale = lerp(config.branchScale[0], config.branchScale[1], sample(2));
+  const crossScale = lerp(
+    config.branchScale[0],
+    config.branchScale[1],
+    sample(2),
+  );
   const segmentLength = from.restPosition.distanceTo(to.restPosition);
 
   return {
@@ -157,6 +155,7 @@ function appendMainNodeAttachments(
   config: VineDistributionConfig,
 ): void {
   const site: AttachmentSite = {
+    isTip: false,
     anchor: growthNode.carrier,
     branchId: null,
     from: growthNode.from,
@@ -169,11 +168,35 @@ function appendMainNodeAttachments(
     to: growthNode.to,
   };
 
-  if (growthNode.hasFlower && assets.flowers.size > 0 && instances.length < maxInstances) {
-    instances.push(createAttachmentInstance(instances.length, "flower", site, assets.flowers, config));
+  if (
+    growthNode.hasFlower &&
+    assets.flowers.size > 0 &&
+    instances.length < maxInstances
+  ) {
+    instances.push(
+      createAttachmentInstance(
+        instances.length,
+        "flower",
+        site,
+        assets.flowers,
+        config,
+      ),
+    );
   }
-  if (growthNode.hasLeaf && assets.leaves.size > 0 && instances.length < maxInstances) {
-    instances.push(createAttachmentInstance(instances.length, "leaf", site, assets.leaves, config));
+  if (
+    growthNode.hasLeaf &&
+    assets.leaves.size > 0 &&
+    instances.length < maxInstances
+  ) {
+    instances.push(
+      createAttachmentInstance(
+        instances.length,
+        "leaf",
+        site,
+        assets.leaves,
+        config,
+      ),
+    );
   }
 }
 
@@ -192,12 +215,17 @@ function appendSecondaryNodeAttachments(
       if (instances.length >= maxInstances) return;
       const node = branch.nodes[nodeIndex]!;
       const previous = branch.nodes[nodeIndex - 1]!;
-      const next = branch.nodes[Math.min(branch.nodes.length - 1, nodeIndex + 1)]!;
+      const next =
+        branch.nodes[Math.min(branch.nodes.length - 1, nodeIndex + 1)]!;
       const sampleIndex = branch.id * 8 + nodeIndex;
       const sample = (channel: number) =>
-        organicSample(config.seed + 1301, sampleIndex, channel, config.variation);
+        organicSample(
+          config.seed + 1301,
+          sampleIndex,
+          channel,
+          config.variation,
+        );
       const isTip = nodeIndex === branch.nodes.length - 1;
-      const tipScale = isTip ? 1.35 : 0.72;
       const site: AttachmentSite = {
         anchor: node,
         branchId: branch.id,
@@ -206,31 +234,84 @@ function appendSecondaryNodeAttachments(
         pathIndex: branch.pathIndex,
         phase: sample(1) * Math.PI * 2,
         sampleIndex: 100_000 + sampleIndex,
-        side:
-          sample(2) < 0.5
-            ? branch.side === 1
-              ? -1
-              : 1
-            : branch.side,
+        side: sample(2) < 0.5 ? (branch.side === 1 ? -1 : 1) : branch.side,
         t: 0.5,
         to: next,
+        isTip,
       };
 
+      if (isTip) {
+        const hasTipFlower =
+          assets.flowers.size > 0 &&
+          sample(3) <
+            clamp01(config.secondaryFlowerProbability * probabilityScale * 1.6);
+
+        if (hasTipFlower) {
+          instances.push(
+            createAttachmentInstance(
+              instances.length,
+              "flower",
+              site,
+              assets.flowers,
+              config,
+            ),
+          );
+        }
+
+        if (instances.length < maxInstances && assets.leaves.size > 0) {
+          const previousSite: AttachmentSite = {
+            ...site,
+            anchor: previous,
+            from: previous,
+            to: node,
+            isTip: false,
+            side: site.side === 1 ? -1 : 1,
+          };
+
+          instances.push(
+            createAttachmentInstance(
+              instances.length,
+              "leaf",
+              previousSite,
+              assets.leaves,
+              config,
+            ),
+          );
+        }
+
+        continue;
+      }
+
+      // Normal secondary-node attachments.
       if (
         assets.flowers.size > 0 &&
-        sample(3) < clamp01(config.secondaryFlowerProbability * probabilityScale * tipScale)
+        sample(3) <
+          clamp01(config.secondaryFlowerProbability * probabilityScale * 0.72)
       ) {
         instances.push(
-          createAttachmentInstance(instances.length, "flower", site, assets.flowers, config),
+          createAttachmentInstance(
+            instances.length,
+            "flower",
+            site,
+            assets.flowers,
+            config,
+          ),
         );
       }
+
       if (
         instances.length < maxInstances &&
         assets.leaves.size > 0 &&
         sample(4) < clamp01(config.secondaryLeafProbability * probabilityScale)
       ) {
         instances.push(
-          createAttachmentInstance(instances.length, "leaf", site, assets.leaves, config),
+          createAttachmentInstance(
+            instances.length,
+            "leaf",
+            site,
+            assets.leaves,
+            config,
+          ),
         );
       }
     }
@@ -243,6 +324,7 @@ interface AttachmentSite {
   from: Node;
   growthNodeId: number;
   pathIndex: number;
+  isTip: boolean;
   phase: number;
   sampleIndex: number;
   side: -1 | 1;
@@ -259,20 +341,31 @@ function createAttachmentInstance(
 ): VineRenderInstance {
   const kindOffset = kind === "flower" ? 409 : 811;
   const sample = (channel: number) =>
-    organicSample(config.seed + kindOffset, site.sampleIndex, channel, config.variation);
+    organicSample(
+      config.seed + kindOffset,
+      site.sampleIndex,
+      channel,
+      config.variation,
+    );
   const resource = pool.pick(sample(1));
   if (!resource) throw new Error(`No ${kind} resource is available.`);
   const scaleRange = kind === "flower" ? config.flowerScale : config.leafScale;
   const flexibilityRange =
     kind === "flower" ? config.flowerFlexibility : config.leafFlexibility;
-  const flutterRange = kind === "flower" ? config.flowerFlutter : config.leafFlutter;
+  const flutterRange =
+    kind === "flower" ? config.flowerFlutter : config.leafFlutter;
 
   return {
     anchor: site.anchor,
-    axialOffset: signed(sample(2)) * 1.2,
+    axialOffset: site.isTip
+      ? kind === "leaf"
+        ? -1.2
+        : 0
+      : signed(sample(2)) * 1.2,
     branchId: site.branchId,
     crossScale: 1,
-    depthBias: signed(sample(3)) * config.depthJitter + (kind === "flower" ? 1.5 : 0),
+    depthBias:
+      signed(sample(3)) * config.depthJitter + (kind === "flower" ? 1.5 : 0),
     flexibility: lerp(flexibilityRange[0], flexibilityRange[1], sample(4)),
     flip: sample(5) < 0.5 ? -1 : 1,
     flutter: lerp(flutterRange[0], flutterRange[1], sample(6)),
@@ -281,14 +374,18 @@ function createAttachmentInstance(
     growthNodeId: site.growthNodeId,
     id,
     kind,
-    lateralOffset:
-      site.side *
-      (kind === "flower"
-        ? 1.2 + sample(7) * config.lateralSpread
-        : 0.6 + sample(7) * 1.8),
-    orientationOffset:
-      site.side *
-      (kind === "flower" ? 0.3 + sample(8) * 0.5 : 0.46 + sample(8) * 0.66),
+    lateralOffset: site.isTip
+      ? kind === "leaf"
+        ? site.side * 1.4
+        : 0
+      : site.side *
+        (kind === "flower"
+          ? 1.2 + sample(7) * config.lateralSpread
+          : 0.6 + sample(7) * 1.8),
+    orientationOffset: site.isTip
+      ? site.side * (kind === "flower" ? 0.08 : 0.16)
+      : site.side *
+        (kind === "flower" ? 0.3 + sample(8) * 0.5 : 0.46 + sample(8) * 0.66),
     pathIndex: site.pathIndex,
     phase: site.phase + sample(9) * 0.7,
     resource,
@@ -333,8 +430,12 @@ function createTint(
 function resolveDepth(instance: VineRenderInstance): number {
   const anchor = instance.anchor?.restPosition;
   return (
-    (anchor?.z ?? lerp(instance.from.restPosition.z, instance.to.restPosition.z, instance.t)) +
-    instance.depthBias
+    (anchor?.z ??
+      lerp(
+        instance.from.restPosition.z,
+        instance.to.restPosition.z,
+        instance.t,
+      )) + instance.depthBias
   );
 }
 
@@ -344,7 +445,9 @@ function organicSample(
   channel: number,
   variation: number,
 ): number {
-  const uniform = fract((index + 1) * 0.618033988749895 + (channel + 1) * 0.414213562373095);
+  const uniform = fract(
+    (index + 1) * 0.618033988749895 + (channel + 1) * 0.414213562373095,
+  );
   return lerp(uniform, seededSample(seed, index, channel), clamp01(variation));
 }
 
@@ -377,4 +480,120 @@ function clamp(value: number, min: number, max: number): number {
 
 function lerp(from: number, to: number, amount: number): number {
   return from + (to - from) * amount;
+}
+
+function appendHangingAttachments(
+  instances: VineRenderInstance[],
+  maxInstances: number,
+  strands: ReadonlyArray<ReadonlyArray<Node>>,
+  assets: ResolvedVineAssets,
+  config: VineDistributionConfig,
+  density: number,
+): void {
+  const probabilityScale = densityProbabilityFactor(density);
+
+  strands.forEach((strand, strandIndex) => {
+    if (strand.length < 2) return;
+
+    for (let nodeIndex = 1; nodeIndex < strand.length; nodeIndex++) {
+      if (instances.length >= maxInstances) return;
+
+      const node = strand[nodeIndex]!;
+      const previous = strand[nodeIndex - 1]!;
+      const next = strand[Math.min(strand.length - 1, nodeIndex + 1)]!;
+
+      const isTip = nodeIndex === strand.length - 1;
+
+      const sampleIndex = 2_000_000 + strandIndex * 128 + nodeIndex;
+
+      const sample = (channel: number) =>
+        organicSample(
+          config.seed + 2701,
+          sampleIndex,
+          channel,
+          config.variation,
+        );
+
+      const site: AttachmentSite = {
+        anchor: node,
+        branchId: null,
+        from: previous,
+        growthNodeId: -1,
+        pathIndex: strandIndex,
+        phase: sample(1) * Math.PI * 2,
+        sampleIndex,
+        side: sample(2) < 0.5 ? -1 : 1,
+        t: 0.5,
+        to: next,
+      };
+
+      if (isTip) {
+        if (
+          assets.flowers.size > 0 &&
+          sample(3) <
+            clamp01(config.secondaryFlowerProbability * probabilityScale * 1.7)
+        ) {
+          instances.push(
+            createAttachmentInstance(
+              instances.length,
+              "flower",
+              site,
+              assets.flowers,
+              config,
+            ),
+          );
+        }
+
+        if (instances.length < maxInstances && assets.leaves.size > 0) {
+          instances.push(
+            createAttachmentInstance(
+              instances.length,
+              "leaf",
+              {
+                ...site,
+                side: site.side === 1 ? -1 : 1,
+              },
+              assets.leaves,
+              config,
+            ),
+          );
+        }
+
+        continue;
+      }
+
+      if (
+        assets.leaves.size > 0 &&
+        sample(4) <
+          clamp01(config.secondaryLeafProbability * probabilityScale * 0.7)
+      ) {
+        instances.push(
+          createAttachmentInstance(
+            instances.length,
+            "leaf",
+            site,
+            assets.leaves,
+            config,
+          ),
+        );
+      }
+
+      if (
+        instances.length < maxInstances &&
+        assets.flowers.size > 0 &&
+        sample(5) <
+          clamp01(config.secondaryFlowerProbability * probabilityScale * 0.32)
+      ) {
+        instances.push(
+          createAttachmentInstance(
+            instances.length,
+            "flower",
+            site,
+            assets.flowers,
+            config,
+          ),
+        );
+      }
+    }
+  });
 }

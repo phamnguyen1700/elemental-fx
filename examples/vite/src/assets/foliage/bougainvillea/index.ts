@@ -20,7 +20,6 @@ import leaf03 from "./leaves/leaf-03-bougainvillea.png";
 import leaf04 from "./leaves/leaf-04-bougainvillea.png";
 import leaf05 from "./leaves/leaf-05-bougainvillea.png";
 import leaf06 from "./leaves/leaf-06-bougainvillea.png";
-import leaf07 from "./leaves/leaf-07-bougainvillea.png";
 
 type AssetCategory = "branch" | "flower" | "leaf";
 
@@ -42,9 +41,12 @@ function resource(
 
 export const bougainvilleaVineAssets = {
   branches: [
-    resource(branch01, "branch", "Leafy branch 01", { greenMask: true }),
-    resource(branch02, "branch", "Leafy branch 02", { greenMask: true }),
-    resource(branch03, "branch", "Leafy branch 03", { greenMask: true }),
+    // resource(branch01, "branch", "Leafy branch 01", { greenMask: true }),
+    // resource(branch02, "branch", "Leafy branch 02", { greenMask: true }),
+    // resource(branch03, "branch", "Leafy branch 03", { greenMask: true }),
+    resource(branch01, "branch", "Leafy branch 01"),
+    resource(branch02, "branch", "Leafy branch 02"),
+    resource(branch03, "branch", "Leafy branch 03"),
   ],
   flowers: [
     resource(flower01, "flower", "Bougainvillea flower cluster 01"),
@@ -61,7 +63,6 @@ export const bougainvilleaVineAssets = {
     resource(leaf04, "leaf", "Bougainvillea leaf 04"),
     resource(leaf05, "leaf", "Bougainvillea leaf 05"),
     resource(leaf06, "leaf", "Bougainvillea leaf 06"),
-    resource(leaf07, "leaf", "Bougainvillea leaf 07"),
   ],
 } satisfies VineAssets;
 

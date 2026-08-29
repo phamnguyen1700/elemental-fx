@@ -17,9 +17,9 @@ const SINGLE_VINE_AREA = {
 } as const;
 
 const SINGLE_VINE_SIZE = {
-  branch: 1.05,
-  flower: 2,
-  leaf: 1.5,
+  branch: 1.5,
+  flower: 3,
+  leaf: 2,
 } as const;
 
 const SINGLE_VINE_NETWORK = {
@@ -27,7 +27,7 @@ const SINGLE_VINE_NETWORK = {
   curvature: 0.5,
   endPosition: ({ bounds }) =>
     new Vec3(bounds.max.x, (bounds.min.y + bounds.max.y) * 0.5, 0),
-  nodesPerPath: 4,
+  nodesPerPath: 6,
   orientationVariation: 0,
   pathCount: 1,
   pathLengthVariation: 0,
@@ -37,9 +37,9 @@ const SINGLE_VINE_NETWORK = {
 
 const SINGLE_VINE_GROWTH = {
   branchProbability: 1,
-  flowerProbability: 3,
+  flowerProbability: 2,
   leafProbability: 1.5,
-  maxBranches: 8,
+  maxBranches: 16,
   maxGrowthNodes: 10,
   spacing: 10,
 } satisfies Partial<VineGrowthConfig>;

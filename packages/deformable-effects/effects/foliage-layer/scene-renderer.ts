@@ -1,5 +1,9 @@
 import type { DeformableRenderer, DeformableScene } from "../scene";
-import { DebugRenderer, InstancedFoliageRenderer } from "../../renderers";
+import {
+  DebugRenderer,
+  InstancedFoliageRenderer,
+  LineRenderer,
+} from "../../renderers";
 import { listVineResources } from "./assets";
 import type { FoliageComposition } from "./composition";
 
@@ -12,13 +16,21 @@ export interface FoliageSceneRendererOptions {
 export class FoliageSceneRenderer implements DeformableRenderer {
   private readonly foliage: InstancedFoliageRenderer;
   private readonly debug: DebugRenderer | null;
+  private readonly branchStems: LineRenderer;
+  private readonly hangingStems: LineRenderer | null;
   private destroyed = false;
 
   constructor(
     private readonly gl: WebGL2RenderingContext,
     private readonly composition: FoliageComposition,
-    options: FoliageSceneRendererOptions
+    options: FoliageSceneRendererOptions,
   ) {
+    this.hangingStems = composition.hangingTopology
+      ? new LineRenderer(gl, {
+          color: composition.preset.render.branchStemColor,
+          lineWidth: composition.preset.render.branchStemWidth,
+        })
+      : null;
     this.foliage = new InstancedFoliageRenderer(
       gl,
       listVineResources(composition.assets),
@@ -26,11 +38,17 @@ export class FoliageSceneRenderer implements DeformableRenderer {
       {
         depthRange: composition.bounds.depthRange,
         maxInstances: composition.distribution.instances.length,
-        requiredResources: composition.assets.branches.resources.map((entry) => entry.resource),
+        requiredResources: composition.assets.branches.resources.map(
+          (entry) => entry.resource,
+        ),
         ...(options.onError ? { onError: options.onError } : {}),
-        ...(options.onReady ? { onReady: options.onReady } : {})
-      }
+        ...(options.onReady ? { onReady: options.onReady } : {}),
+      },
     );
+    this.branchStems = new LineRenderer(gl, {
+      color: composition.preset.render.branchStemColor,
+      lineWidth: composition.preset.render.branchStemWidth,
+    });
     this.debug = options.debug ? new DebugRenderer(gl) : null;
   }
 
@@ -48,11 +66,25 @@ export class FoliageSceneRenderer implements DeformableRenderer {
     gl.depthMask(true);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    const hangingStrands =
+      this.composition.hangingTopology?.groups?.strands ?? [];
 
+    if (this.hangingStems && hangingStrands.length > 0) {
+      this.hangingStems.renderChains(
+        hangingStrands,
+        projection,
+        this.composition.preset.render.branchStemColor,
+      );
+    }
+    this.branchStems.renderChains(
+      this.composition.vine.branches.map((branch) => branch.nodes),
+      projection,
+      this.composition.preset.render.branchStemColor,
+    );
     this.foliage.render(
       this.composition.distribution.instances,
       projection,
-      this.composition.scene.engine.time
+      this.composition.scene.engine.time,
     );
 
     if (this.debug) {
@@ -66,9 +98,9 @@ export class FoliageSceneRenderer implements DeformableRenderer {
           ? {
               from: this.composition.pointerSweep.previousPointer,
               to: this.composition.pointerSweep.currentPointer,
-              radius: this.composition.pointerSweep.radius
+              radius: this.composition.pointerSweep.radius,
             }
-          : undefined
+          : undefined,
       );
     }
   }
@@ -78,10 +110,14 @@ export class FoliageSceneRenderer implements DeformableRenderer {
     this.destroyed = true;
     this.foliage.destroy();
     this.debug?.destroy();
+    this.branchStems.destroy();
+    this.hangingStems?.destroy();
   }
 }
 
-function createFoliageProjection(composition: FoliageComposition): Float32Array {
+function createFoliageProjection(
+  composition: FoliageComposition,
+): Float32Array {
   const { halfWidth, halfHeight, depthRange } = composition.bounds;
   return new Float32Array([
     1 / halfWidth,
@@ -99,6 +135,6 @@ function createFoliageProjection(composition: FoliageComposition): Float32Array 
     0,
     0,
     0,
-    1
+    1,
   ]);
 }

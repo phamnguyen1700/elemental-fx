@@ -1,11 +1,15 @@
 import { Vec3 } from "../../core/math/vec3";
 import { GravityForce, PointerSweepForce, WindForce } from "../../forces";
 import { bougainvilleaPreset } from "../../presets/bougainvillea";
-import { buildNetworks, buildVineGrowth } from "../../topologies";
+import {
+  buildHangingStrands,
+  buildNetworks,
+  buildVineGrowth,
+} from "../../topologies";
 import type {
   NetworkBounds,
   TopologyResult,
-  VineGrowthResult
+  VineGrowthResult,
 } from "../../topologies";
 import { resolveEffectArea } from "../area";
 import type { ResolvedEffectArea } from "../area";
@@ -28,6 +32,7 @@ export interface FoliageProjectionBounds {
 export interface FoliageComposition {
   scene: ReturnType<typeof createDeformableScene>;
   topology: TopologyResult;
+  hangingTopology: TopologyResult | null;
   vine: VineGrowthResult;
   pointerSweep: PointerSweepForce;
   wind: WindForce | null;
@@ -48,12 +53,12 @@ export type VineComposition = FoliageComposition;
 export function createFoliageComposition(
   config: FoliageLayerConfig,
   aspect = 1,
-  devicePixelRatio = globalThis.devicePixelRatio ?? 1
+  devicePixelRatio = globalThis.devicePixelRatio ?? 1,
 ): FoliageComposition {
   const assets = resolveVineAssets(config.assets);
   const preset = resolveFoliageLayerPreset(
     config.preset ?? bougainvilleaPreset,
-    config
+    config,
   );
   const variation = clamp01(config.variation ?? preset.growth.variation);
   const density = clamp(config.density ?? 1, 0.15, 3);
@@ -72,28 +77,28 @@ export function createFoliageComposition(
     area,
     halfWidth,
     halfHeight,
-    preset.depth.spread
+    preset.depth.spread,
   );
   const baseNodesPerPath = Math.max(
     4,
-    Math.floor(preset.network.nodesPerPath ?? 16)
+    Math.floor(preset.network.nodesPerPath ?? 16),
   );
   const nodesPerPath = Math.max(
     4,
-    Math.round(baseNodesPerPath * (0.68 + budget.nodeScale * 0.32))
+    Math.round(baseNodesPerPath * (0.68 + budget.nodeScale * 0.32)),
   );
   const mainNodeCap =
     budget.quality === "high" ? 820 : budget.quality === "medium" ? 500 : 260;
   const qualityPathCount = Math.max(
     1,
-    Math.round((preset.network.pathCount ?? 18) * budget.nodeScale)
+    Math.round((preset.network.pathCount ?? 18) * budget.nodeScale),
   );
   const pathCount = Math.max(
     1,
     Math.min(
       qualityPathCount,
-      Math.floor(mainNodeCap / Math.max(1, nodesPerPath * density))
-    )
+      Math.floor(mainNodeCap / Math.max(1, nodesPerPath * density)),
+    ),
   );
   const seed = preset.network.seed ?? preset.distribution.seed;
   const pathEndpoints = createFoliagePathEndpointResolvers({ seed, variation });
@@ -108,32 +113,69 @@ export function createFoliageComposition(
     pathCount,
     seed,
     startPosition: preset.network.startPosition ?? pathEndpoints.startPosition,
-    variation
+    variation,
   });
   const vine = buildVineGrowth(mainTopology, {
     ...preset.growth,
     density,
     maxBranches: Math.max(
       1,
-      Math.round(preset.growth.maxBranches * budget.nodeScale)
+      Math.round(preset.growth.maxBranches * budget.nodeScale),
     ),
     maxGrowthNodes: Math.max(
       1,
-      Math.round(preset.growth.maxGrowthNodes * budget.nodeScale)
+      Math.round(preset.growth.maxGrowthNodes * budget.nodeScale),
     ),
-    variation
+    variation,
   });
-  annotateVineDepth(vine.topology);
+  const hangingTopology =
+    config.hanging?.enabled === true
+      ? buildHangingStrands({
+          strandCount: config.hanging.strandCount ?? 8,
+          nodesPerStrand: config.hanging.nodesPerStrand ?? 8,
 
-  const distribution = buildVineDistribution(vine, assets, {
-    ...preset.distribution,
-    maxInstances: Math.max(
-      1,
-      Math.round(preset.distribution.maxInstances * budget.rendererScale)
-    ),
-    variation
-  }, density);
-  const scene = createDeformableScene({ quality, topology: vine.topology });
+          length: config.hanging.length ?? 72,
+          lengthVariation: config.hanging.lengthVariation ?? 0.38,
+
+          variation,
+
+          rootJitter:
+            config.hanging.rootJitter ??
+            new Vec3(3, 2, preset.depth.spread * 0.18),
+
+          seed: seed + 7919,
+
+          segmentStiffness: config.hanging.segmentStiffness ?? 0.94,
+
+          bendStiffness: config.hanging.bendStiffness ?? 0.14,
+
+          rootDistribution: (index, total) =>
+            resolveHangingRoot(vine, index, total, networkBounds),
+        })
+      : null;
+
+  const topology = hangingTopology
+    ? combineTopologies(vine.topology, hangingTopology)
+    : vine.topology;
+  annotateVineDepth(topology);
+  const distribution = buildVineDistribution(
+    vine,
+    assets,
+    {
+      ...preset.distribution,
+      maxInstances: Math.max(
+        1,
+        Math.round(preset.distribution.maxInstances * budget.rendererScale),
+      ),
+      variation,
+    },
+    density,
+    hangingTopology?.groups?.strands ?? [],
+  );
+  const scene = createDeformableScene({
+    quality,
+    topology,
+  });
   const pointerSweep = new PointerSweepForce(preset.interaction);
   const wind = preset.wind ? new WindForce(preset.wind) : null;
   const gravity = preset.gravity ? new GravityForce(preset.gravity) : null;
@@ -141,14 +183,15 @@ export function createFoliageComposition(
   if (wind) scene.addForce(wind);
   if (gravity) scene.addForce(gravity);
 
-  vine.topology.metadata = {
-    ...vine.topology.metadata,
+  topology.metadata = {
+    ...topology.metadata,
     area,
     density,
     depthSpread: preset.depth.spread,
     effect: "vine-layer",
     publicEffect: "foliage-layer",
-    variation
+    hanging: hangingTopology !== null,
+    variation,
   };
 
   return {
@@ -159,14 +202,15 @@ export function createFoliageComposition(
     destroy: () => scene.destroy(),
     distribution,
     gravity,
+    hangingTopology,
     networkBounds,
     pointerSweep,
     preset,
     scene,
-    topology: vine.topology,
+    topology,
     variation,
     vine,
-    wind
+    wind,
   };
 }
 
@@ -176,7 +220,7 @@ function resolveNetworkBounds(
   area: ResolvedEffectArea,
   halfWidth: number,
   halfHeight: number,
-  depthSpread: number
+  depthSpread: number,
 ): NetworkBounds {
   const canvasWidth = halfWidth * 2;
   const canvasHeight = halfHeight * 2;
@@ -187,33 +231,33 @@ function resolveNetworkBounds(
     max: new Vec3(
       minX + area.width * canvasWidth,
       minY + area.height * canvasHeight,
-      depthSpread
-    )
+      depthSpread,
+    ),
   };
 }
 
 function applyVineSize(
   preset: FoliagePreset,
-  size: FoliageLayerConfig["size"]
+  size: FoliageLayerConfig["size"],
 ): void {
   if (!size) return;
   preset.distribution.branchScale = scaleRange(
     preset.distribution.branchScale,
-    size.branch ?? size.base
+    size.branch ?? size.base,
   );
   preset.distribution.flowerScale = scaleRange(
     preset.distribution.flowerScale,
-    size.flower
+    size.flower,
   );
   preset.distribution.leafScale = scaleRange(
     preset.distribution.leafScale,
-    size.leaf
+    size.leaf,
   );
 }
 
 function scaleRange(
   range: readonly [number, number],
-  size: VineSizeValue | undefined
+  size: VineSizeValue | undefined,
 ): readonly [number, number] {
   if (size === undefined) return range;
   if (typeof size === "number") {
@@ -222,7 +266,7 @@ function scaleRange(
   }
   return [
     range[0] * Math.max(0.05, size[0]),
-    range[1] * Math.max(0.05, size[1])
+    range[1] * Math.max(0.05, size[1]),
   ];
 }
 
@@ -230,10 +274,14 @@ function annotateVineDepth(topology: TopologyResult): void {
   const mainNodes = topology.groups?.paths?.flat() ?? [];
   const mainNodeSet = new Set(mainNodes);
   for (const node of topology.nodes) {
-    const inheritedDepth = readNumber(node.metadata.depth, resolveDepthFromPosition(node));
+    const inheritedDepth = readNumber(
+      node.metadata.depth,
+      resolveDepthFromPosition(node),
+    );
     const baseFlexibility = readNumber(node.metadata.flexibility, 1);
     const role = node.metadata.vineRole;
-    const roleFlexibility = role === "branch" ? 1.12 : role === "growth-node" ? 1.04 : 1;
+    const roleFlexibility =
+      role === "branch" ? 1.12 : role === "growth-node" ? 1.04 : 1;
     node.metadata.flexibility =
       baseFlexibility * roleFlexibility * (0.68 + inheritedDepth * 0.64);
     node.metadata.foliageDepth = inheritedDepth;
@@ -247,7 +295,9 @@ function annotateVineDepth(topology: TopologyResult): void {
   }
 }
 
-function resolveDepthFromPosition(node: TopologyResult["nodes"][number]): number {
+function resolveDepthFromPosition(
+  node: TopologyResult["nodes"][number],
+): number {
   return clamp01((node.position.z + 100) / 200);
 }
 
@@ -261,4 +311,61 @@ function clamp01(value: number): number {
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
+}
+
+function lerp(from: number, to: number, amount: number): number {
+  return from + (to - from) * amount;
+}
+
+function resolveHangingRoot(
+  vine: VineGrowthResult,
+  index: number,
+  total: number,
+  bounds: NetworkBounds,
+): Vec3 {
+  const paths = vine.mainPaths;
+
+  if (paths.length === 0) {
+    const t = total <= 1 ? 0.5 : index / Math.max(1, total - 1);
+
+    return new Vec3(lerp(bounds.min.x, bounds.max.x, t), bounds.min.y, 0);
+  }
+
+  const path = paths[index % paths.length];
+
+  if (!path || path.length === 0) {
+    return new Vec3((bounds.min.x + bounds.max.x) * 0.5, bounds.min.y, 0);
+  }
+
+  const t = total <= 1 ? 0.5 : index / Math.max(1, total - 1);
+
+  const nodeIndex = Math.min(
+    path.length - 1,
+    Math.max(0, Math.round(t * (path.length - 1))),
+  );
+
+  return path[nodeIndex]!.restPosition.clone();
+}
+
+function combineTopologies(
+  primary: TopologyResult,
+  secondary: TopologyResult,
+): TopologyResult {
+  return {
+    nodes: [...primary.nodes, ...secondary.nodes],
+
+    constraints: [...primary.constraints, ...secondary.constraints],
+
+    edges: [...(primary.edges ?? []), ...(secondary.edges ?? [])],
+
+    groups: {
+      ...(primary.groups ?? {}),
+      ...(secondary.groups ?? {}),
+    },
+
+    metadata: {
+      ...(primary.metadata ?? {}),
+      hanging: true,
+    },
+  };
 }

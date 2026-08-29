@@ -8,5 +8,5 @@ export interface DeformableEffectHandle<TConfig extends object> {
 
 export type DeformableEffectFactory<TConfig extends object> = (
   canvas: HTMLCanvasElement,
-  config: TConfig
+  config: TConfig,
 ) => DeformableEffectHandle<TConfig>;

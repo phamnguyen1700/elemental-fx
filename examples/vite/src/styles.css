@@ -359,8 +359,8 @@ h2 {
   background:
     linear-gradient(
       to bottom,
-      rgb(5 14 9 / 0.18),
-      rgb(5 14 9 / 0.42)
+      rgba(5, 14, 9, 0.781),
+      rgba(5, 14, 9, 0.637)
     ),
     url("./assets/foliage/bougainvillea-bg.jpg") center / cover no-repeat;
 

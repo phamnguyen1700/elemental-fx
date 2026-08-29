@@ -2,7 +2,7 @@ import { Vec3 } from "../../core/math/vec3";
 import { mergeFoliagePreset } from "../../effects/foliage-layer/config";
 import type {
   FoliagePreset,
-  FoliagePresetOverrides
+  FoliagePresetOverrides,
 } from "../../effects/foliage-layer/types";
 
 export const bougainvilleaPreset: FoliagePreset = {
@@ -29,7 +29,7 @@ export const bougainvilleaPreset: FoliagePreset = {
     preferredDirection: new Vec3(0, -1, 0),
     seed: 5000,
     stiffness: 0.68,
-    variation: 0.85
+    variation: 0.85,
   },
   growth: {
     attachmentStiffness: 0.92,
@@ -37,7 +37,7 @@ export const bougainvilleaPreset: FoliagePreset = {
     branchBendStiffness: 0.075,
     branchCurvature: 0.36,
     branchDamping: 0.958,
-    branchLength: [38, 66],
+    branchLength: [26, 48],
     branchMass: 0.72,
     branchNodeCount: [3, 5],
     branchProbability: 0.68,
@@ -56,20 +56,20 @@ export const bougainvilleaPreset: FoliagePreset = {
     seed: 5037,
     spacing: 29,
     spacingJitter: 0.2,
-    variation: 0.85
+    variation: 0.85,
   },
   interaction: {
     depthFalloff: 0.018,
     lift: 14,
     radius: 34,
     strength: 16,
-    velocityScale: 2.1
+    velocityScale: 2.1,
   },
   wind: null,
   gravity: null,
   depth: {
     pointerPlane: 28,
-    spread: 58
+    spread: 58,
   },
   distribution: {
     branchFlexibility: [0.8, 1.12],
@@ -88,12 +88,12 @@ export const bougainvilleaPreset: FoliagePreset = {
     secondaryLeafProbability: 0.24,
     seed: 5000,
     structuralOverlap: 1.14,
-    variation: 0.85
+    variation: 0.85,
   },
   render: {
     alphaCutoff: 0.035,
     ambientLight: 0.72,
-    atlasResolution: 256,
+    atlasResolution: 1024,
     backlight: 0.2,
     branchStemColor: [0.12, 0.25, 0.075, 0.72],
     branchStemWidth: 0.86,
@@ -103,12 +103,12 @@ export const bougainvilleaPreset: FoliagePreset = {
     flutterStrength: 1,
     idleFlutter: 0,
     stemColor: [0.075, 0.18, 0.045, 0.8],
-    stemWidth: 1.15
-  }
+    stemWidth: 1.15,
+  },
 };
 
 export function createBougainvilleaPreset(
-  overrides: FoliagePresetOverrides = {}
+  overrides: FoliagePresetOverrides = {},
 ): FoliagePreset {
   return mergeFoliagePreset(bougainvilleaPreset, overrides);
 }

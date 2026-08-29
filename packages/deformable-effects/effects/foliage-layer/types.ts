@@ -43,6 +43,21 @@ export interface FoliageDepthConfig {
   pointerPlane: number;
 }
 
+export interface VineHangingConfig {
+  enabled?: boolean;
+
+  strandCount?: number;
+  nodesPerStrand?: number;
+
+  length?: number;
+  lengthVariation?: number;
+
+  rootJitter?: Vec3;
+
+  segmentStiffness?: number;
+  bendStiffness?: number;
+}
+
 export interface VineDistributionConfig {
   maxInstances: number;
   structuralOverlap: number;
@@ -123,6 +138,7 @@ export interface VineLayerConfig extends FoliagePresetOverrides {
   assets: VineAssets;
   preset?: FoliagePreset;
   quality?: DeformableQuality;
+  hanging?: VineHangingConfig;
   area?: EffectArea;
   seed?: number;
   density?: number;

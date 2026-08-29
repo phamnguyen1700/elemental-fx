@@ -2,7 +2,7 @@ import { createGlProgram, loadImageSource } from "../core/webgl";
 import type {
   FoliageAsset,
   FoliageRenderConfig,
-  FoliageRenderInstance
+  FoliageRenderInstance,
 } from "../effects/foliage-layer/types";
 
 const FLOATS_PER_INSTANCE = 20;
@@ -152,10 +152,12 @@ export class InstancedFoliageRenderer {
     private readonly gl: WebGL2RenderingContext,
     resources: ReadonlyArray<FoliageAsset>,
     private readonly config: FoliageRenderConfig,
-    private readonly options: InstancedFoliageRendererOptions
+    private readonly options: InstancedFoliageRendererOptions,
   ) {
     this.program = createGlProgram(gl, VS, FS);
-    this.instanceData = new Float32Array(options.maxInstances * FLOATS_PER_INSTANCE);
+    this.instanceData = new Float32Array(
+      options.maxInstances * FLOATS_PER_INSTANCE,
+    );
 
     const vao = gl.createVertexArray();
     const quadVbo = gl.createBuffer();
@@ -171,8 +173,10 @@ export class InstancedFoliageRenderer {
     gl.bindBuffer(gl.ARRAY_BUFFER, quadVbo);
     gl.bufferData(
       gl.ARRAY_BUFFER,
-      new Float32Array([-0.5, 0, 0, 0, 0.5, 0, 1, 0, -0.5, 1, 0, 1, 0.5, 1, 1, 1]),
-      gl.STATIC_DRAW
+      new Float32Array([
+        -0.5, 0, 0, 0, 0.5, 0, 1, 0, -0.5, 1, 0, 1, 0.5, 1, 1, 1,
+      ]),
+      gl.STATIC_DRAW,
     );
     gl.enableVertexAttribArray(0);
     gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 16, 0);
@@ -180,7 +184,11 @@ export class InstancedFoliageRenderer {
     gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 16, 8);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, instanceVbo);
-    gl.bufferData(gl.ARRAY_BUFFER, this.instanceData.byteLength, gl.DYNAMIC_DRAW);
+    gl.bufferData(
+      gl.ARRAY_BUFFER,
+      this.instanceData.byteLength,
+      gl.DYNAMIC_DRAW,
+    );
     const stride = FLOATS_PER_INSTANCE * 4;
     enableInstanceAttribute(gl, 2, 3, stride, 0);
     enableInstanceAttribute(gl, 3, 4, stride, 12);
@@ -195,7 +203,7 @@ export class InstancedFoliageRenderer {
   render(
     instances: ReadonlyArray<FoliageRenderInstance>,
     projectionMatrix: Float32Array,
-    time: number
+    time: number,
   ): void {
     if (this.destroyed || this.loadError || !this.textureArray) return;
 
@@ -257,8 +265,13 @@ export class InstancedFoliageRenderer {
         (restAnchor?.y ?? lerp(restFrom.y, restTo.y, t)) +
         restNormalY * instance.lateralOffset +
         restTangentY * instance.axialOffset;
-      const contact = Math.min(1, Math.hypot(anchorX - restX, anchorY - restY) / 18);
-      const depth = clamp01((anchorZ + this.options.depthRange) / (this.options.depthRange * 2));
+      const contact = Math.min(
+        1,
+        Math.hypot(anchorX - restX, anchorY - restY) / 18,
+      );
+      const depth = clamp01(
+        (anchorZ + this.options.depthRange) / (this.options.depthRange * 2),
+      );
       const offset = count * FLOATS_PER_INSTANCE;
 
       this.instanceData[offset] = anchorX;
@@ -295,43 +308,52 @@ export class InstancedFoliageRenderer {
     gl.uniformMatrix4fv(
       gl.getUniformLocation(this.program.program, "u_projection"),
       false,
-      projectionMatrix
+      projectionMatrix,
     );
     gl.uniform1f(gl.getUniformLocation(this.program.program, "u_time"), time);
     gl.uniform1f(
       gl.getUniformLocation(this.program.program, "u_flutter_strength"),
-      this.config.flutterStrength
+      this.config.flutterStrength,
     );
     gl.uniform1f(
       gl.getUniformLocation(this.program.program, "u_idle_flutter"),
-      this.config.idleFlutter
+      this.config.idleFlutter,
     );
     gl.uniform1f(
       gl.getUniformLocation(this.program.program, "u_alpha_cutoff"),
-      this.config.alphaCutoff
+      this.config.alphaCutoff,
     );
     gl.uniform1f(
       gl.getUniformLocation(this.program.program, "u_ambient"),
-      this.config.ambientLight
+      this.config.ambientLight,
     );
     gl.uniform1f(
       gl.getUniformLocation(this.program.program, "u_directional"),
-      this.config.directionalLight
+      this.config.directionalLight,
     );
-    gl.uniform1f(gl.getUniformLocation(this.program.program, "u_backlight"), this.config.backlight);
+    gl.uniform1f(
+      gl.getUniformLocation(this.program.program, "u_backlight"),
+      this.config.backlight,
+    );
     gl.uniform1f(
       gl.getUniformLocation(this.program.program, "u_depth_darkening"),
-      this.config.depthDarkening
+      this.config.depthDarkening,
     );
     gl.uniform1f(
       gl.getUniformLocation(this.program.program, "u_contact_shadow"),
-      this.config.contactShadow
+      this.config.contactShadow,
     );
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D_ARRAY, this.textureArray);
     gl.uniform1i(gl.getUniformLocation(this.program.program, "u_textures"), 0);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceVbo);
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.instanceData, 0, count * FLOATS_PER_INSTANCE);
+    gl.bufferSubData(
+      gl.ARRAY_BUFFER,
+      0,
+      this.instanceData,
+      0,
+      count * FLOATS_PER_INSTANCE,
+    );
     gl.bindVertexArray(this.vao);
     gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, count);
     gl.bindVertexArray(null);
@@ -348,36 +370,46 @@ export class InstancedFoliageRenderer {
     this.program.destroy();
   }
 
-  private async prepareTextureArray(resources: ReadonlyArray<FoliageAsset>): Promise<void> {
+  private async prepareTextureArray(
+    resources: ReadonlyArray<FoliageAsset>,
+  ): Promise<void> {
     try {
       const uniqueResources = dedupeResources(resources);
-      const maxLayers = this.gl.getParameter(this.gl.MAX_ARRAY_TEXTURE_LAYERS) as number;
+      const maxLayers = this.gl.getParameter(
+        this.gl.MAX_ARRAY_TEXTURE_LAYERS,
+      ) as number;
       if (uniqueResources.length > maxLayers) {
         throw new Error(
-          `Foliage resource count (${uniqueResources.length}) exceeds the WebGL layer limit (${maxLayers}).`
+          `Foliage resource count (${uniqueResources.length}) exceeds the WebGL layer limit (${maxLayers}).`,
         );
       }
       const settled = await Promise.allSettled(
         uniqueResources.map(async (resource) => ({
           resource,
-          image: await loadImageSource(resource.handle)
-        }))
+          image: await loadImageSource(resource.handle),
+        })),
       );
       const images = settled.flatMap((result) =>
-        result.status === "fulfilled" ? [result.value] : []
+        result.status === "fulfilled" ? [result.value] : [],
       );
       settled.forEach((result) => {
-        if (result.status === "rejected") this.options.onError?.(asError(result.reason));
+        if (result.status === "rejected")
+          this.options.onError?.(asError(result.reason));
       });
-      const loadedKeys = new Set(images.map(({ resource }) => resourceKey(resource)));
+      const loadedKeys = new Set(
+        images.map(({ resource }) => resourceKey(resource)),
+      );
       const required = dedupeResources(this.options.requiredResources ?? []);
       if (
         required.length > 0 &&
         required.every((resource) => !loadedKeys.has(resourceKey(resource)))
       ) {
-        throw new Error("VineLayer could not load any required branch resource.");
+        throw new Error(
+          "VineLayer could not load any required branch resource.",
+        );
       }
-      if (images.length === 0) throw new Error("VineLayer could not load any visual resource.");
+      if (images.length === 0)
+        throw new Error("VineLayer could not load any visual resource.");
       if (this.destroyed) return;
 
       const size = Math.max(32, Math.floor(this.config.atlasResolution));
@@ -392,23 +424,40 @@ export class InstancedFoliageRenderer {
         this.gl.RGBA8,
         size,
         size,
-        images.length
+        images.length,
       );
       this.gl.texParameteri(
         this.gl.TEXTURE_2D_ARRAY,
         this.gl.TEXTURE_MIN_FILTER,
-        this.gl.LINEAR_MIPMAP_LINEAR
+        this.gl.LINEAR_MIPMAP_LINEAR,
       );
-      this.gl.texParameteri(this.gl.TEXTURE_2D_ARRAY, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
+      this.gl.texParameteri(
+        this.gl.TEXTURE_2D_ARRAY,
+        this.gl.TEXTURE_MAG_FILTER,
+        this.gl.LINEAR,
+      );
+      const anisotropy = this.gl.getExtension("EXT_texture_filter_anisotropic");
+
+      if (anisotropy) {
+        const maxAnisotropy = this.gl.getParameter(
+          anisotropy.MAX_TEXTURE_MAX_ANISOTROPY_EXT,
+        ) as number;
+
+        this.gl.texParameterf(
+          this.gl.TEXTURE_2D_ARRAY,
+          anisotropy.TEXTURE_MAX_ANISOTROPY_EXT,
+          Math.min(8, maxAnisotropy),
+        );
+      }
       this.gl.texParameteri(
         this.gl.TEXTURE_2D_ARRAY,
         this.gl.TEXTURE_WRAP_S,
-        this.gl.CLAMP_TO_EDGE
+        this.gl.CLAMP_TO_EDGE,
       );
       this.gl.texParameteri(
         this.gl.TEXTURE_2D_ARRAY,
         this.gl.TEXTURE_WRAP_T,
-        this.gl.CLAMP_TO_EDGE
+        this.gl.CLAMP_TO_EDGE,
       );
       this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, 1);
       this.gl.pixelStorei(this.gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, 0);
@@ -417,7 +466,11 @@ export class InstancedFoliageRenderer {
       staging.width = size;
       staging.height = size;
       const context = staging.getContext("2d");
-      if (!context) throw new Error("Foliage texture staging canvas is unavailable.");
+      if (!context)
+        throw new Error("Foliage texture staging canvas is unavailable.");
+
+      context.imageSmoothingEnabled = true;
+      context.imageSmoothingQuality = "high";
 
       images.forEach(({ resource, image }, layer) => {
         context.clearRect(0, 0, size, size);
@@ -433,11 +486,14 @@ export class InstancedFoliageRenderer {
           1,
           this.gl.RGBA,
           this.gl.UNSIGNED_BYTE,
-          staging
+          staging,
         );
         const key = resourceKey(resource);
         this.resourceLayers.set(key, layer);
-        this.resourceAspects.set(key, image.naturalWidth / Math.max(1, image.naturalHeight));
+        this.resourceAspects.set(
+          key,
+          image.naturalWidth / Math.max(1, image.naturalHeight),
+        );
       });
 
       this.gl.generateMipmap(this.gl.TEXTURE_2D_ARRAY);
@@ -456,14 +512,16 @@ function enableInstanceAttribute(
   location: number,
   size: number,
   stride: number,
-  offset: number
+  offset: number,
 ): void {
   gl.enableVertexAttribArray(location);
   gl.vertexAttribPointer(location, size, gl.FLOAT, false, stride, offset);
   gl.vertexAttribDivisor(location, 1);
 }
 
-function dedupeResources(resources: ReadonlyArray<FoliageAsset>): FoliageAsset[] {
+function dedupeResources(
+  resources: ReadonlyArray<FoliageAsset>,
+): FoliageAsset[] {
   const result: FoliageAsset[] = [];
   const seen = new Set<string>();
   for (const resource of resources) {
