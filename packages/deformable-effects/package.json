@@ -1,0 +1,51 @@
+{
+  "name": "@elemental-fx/deformable-effects",
+  "version": "0.1.2",
+  "description": "Reusable WebGL deformable effects framework.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/phamnguyen1700/elemental-fx.git",
+    "directory": "packages/deformable-effects"
+  },
+  "homepage": "https://github.com/phamnguyen1700/elemental-fx#readme",
+  "bugs": {
+    "url": "https://github.com/phamnguyen1700/elemental-fx/issues"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./react": {
+      "types": "./dist/react/index.d.ts",
+      "import": "./dist/react/index.js",
+      "require": "./dist/react/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup index.ts react/index.ts --format esm,cjs --dts --clean",
+    "clean": "rimraf dist",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "peerDependencies": {
+    "react": ">=18.2.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -9,8 +9,9 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@elemental-fx/canvas-effects": "0.1.0",
-    "@elemental-fx/fluid-effects": "0.1.0",
+    "@elemental-fx/canvas-effects": "workspace:*",
+    "@elemental-fx/fluid-effects": "workspace:*",
+    "@elemental-fx/deformable-effects": "workspace:*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   }

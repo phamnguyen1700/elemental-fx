@@ -1,12 +1,5 @@
-import {
-  createCanvasEngine,
-  type CanvasViewport,
-} from "../../core/canvas-engine";
-import {
-  parseCssColor,
-  resolveCssColor,
-  type RgbaColor,
-} from "../../core/color";
+import { createCanvasEngine, type CanvasViewport } from "../../core/canvas-engine";
+import { parseCssColor, resolveCssColor, type RgbaColor } from "../../core/color";
 import { createPointerTracker, type PointerState } from "../../core/pointer";
 import { createWaveGrid, type WaveGrid } from "../../engines/wave-grid";
 import type { EffectHandle } from "../types";
@@ -66,19 +59,15 @@ const DEFAULT_CONFIG: ResolvedWaterSurfaceConfig = {
   clickRadius: 2.8,
 
   maxDpr: 2,
-  autoStart: true,
+  autoStart: true
 };
 
 const BLACK: RgbaColor = { r: 0, g: 0, b: 0, a: 1 };
 const WHITE: RgbaColor = { r: 255, g: 255, b: 255, a: 1 };
 
-function applyConfig(
-  target: ResolvedWaterSurfaceConfig,
-  source: WaterSurfaceConfig,
-): void {
+function applyConfig(target: ResolvedWaterSurfaceConfig, source: WaterSurfaceConfig): void {
   if (source.color !== undefined) target.color = source.color;
-  if (source.highlightColor !== undefined)
-    target.highlightColor = source.highlightColor;
+  if (source.highlightColor !== undefined) target.highlightColor = source.highlightColor;
   if (source.shadowColor !== undefined) target.shadowColor = source.shadowColor;
   if (source.opacity !== undefined) target.opacity = source.opacity;
   if (source.resolution !== undefined) target.resolution = source.resolution;
@@ -86,11 +75,9 @@ function applyConfig(
   if (source.damping !== undefined) target.damping = source.damping;
   if (source.spread !== undefined) target.spread = source.spread;
   if (source.maxHeight !== undefined) target.maxHeight = source.maxHeight;
-  if (source.hoverStrength !== undefined)
-    target.hoverStrength = source.hoverStrength;
+  if (source.hoverStrength !== undefined) target.hoverStrength = source.hoverStrength;
   if (source.hoverRadius !== undefined) target.hoverRadius = source.hoverRadius;
-  if (source.clickStrength !== undefined)
-    target.clickStrength = source.clickStrength;
+  if (source.clickStrength !== undefined) target.clickStrength = source.clickStrength;
   if (source.clickRadius !== undefined) target.clickRadius = source.clickRadius;
   if (source.maxDpr !== undefined) target.maxDpr = source.maxDpr;
   if (source.autoStart !== undefined) target.autoStart = source.autoStart;
@@ -100,20 +87,17 @@ function mixChannel(base: number, target: number, amount: number): number {
   return base + (target - base) * Math.min(1, Math.max(0, amount));
 }
 
-function getGridPoint(
-  state: Readonly<PointerState>,
-  grid: WaveGrid,
-): { x: number; y: number } {
+function getGridPoint(state: Readonly<PointerState>, grid: WaveGrid): { x: number; y: number } {
   const { columns, rows } = grid.getState();
   return {
     x: state.normalizedX * (columns - 1),
-    y: state.normalizedY * (rows - 1),
+    y: state.normalizedY * (rows - 1)
   };
 }
 
 export function createWaterSurfaceEffect(
   canvas: HTMLCanvasElement,
-  initialConfig: WaterSurfaceConfig = {},
+  initialConfig: WaterSurfaceConfig = {}
 ): EffectHandle<WaterSurfaceConfig> {
   const config = { ...DEFAULT_CONFIG };
   applyConfig(config, initialConfig);
@@ -124,7 +108,7 @@ export function createWaterSurfaceEffect(
     tension: config.tension,
     damping: config.damping,
     spread: config.spread,
-    maxHeight: config.maxHeight,
+    maxHeight: config.maxHeight
   });
   const renderCanvas = document.createElement("canvas");
   const renderContext = renderCanvas.getContext("2d", { alpha: true });
@@ -144,16 +128,8 @@ export function createWaterSurfaceEffect(
     if (!colorsDirty) return;
 
     const baseCss = resolveCssColor(canvas, config.color, "hsl(0 0% 8%)");
-    const highlightCss = resolveCssColor(
-      canvas,
-      config.highlightColor,
-      "hsl(0 0% 100%)",
-    );
-    const shadowCss = resolveCssColor(
-      canvas,
-      config.shadowColor,
-      "hsl(0 0% 4%)",
-    );
+    const highlightCss = resolveCssColor(canvas, config.highlightColor, "hsl(0 0% 100%)");
+    const shadowCss = resolveCssColor(canvas, config.shadowColor, "hsl(0 0% 4%)");
     baseColor = parseCssColor(baseCss, BLACK);
     highlightColor = parseCssColor(highlightCss, WHITE);
     shadowColor = parseCssColor(shadowCss, BLACK);
@@ -162,24 +138,15 @@ export function createWaterSurfaceEffect(
 
   const resizeSurface = (viewport: CanvasViewport): void => {
     const cellSize = Math.max(4, config.resolution);
-    const columns = Math.min(
-      256,
-      Math.max(8, Math.ceil(viewport.width / cellSize) + 2),
-    );
-    const rows = Math.min(
-      192,
-      Math.max(8, Math.ceil(viewport.height / cellSize) + 2),
-    );
+    const columns = Math.min(256, Math.max(8, Math.ceil(viewport.width / cellSize) + 2));
+    const rows = Math.min(192, Math.max(8, Math.ceil(viewport.height / cellSize) + 2));
     waveGrid.resize(columns, rows);
     renderCanvas.width = columns;
     renderCanvas.height = rows;
     imageData = renderContext.createImageData(columns, rows);
   };
 
-  const renderSurface = (
-    context: CanvasRenderingContext2D,
-    viewport: CanvasViewport,
-  ): void => {
+  const renderSurface = (context: CanvasRenderingContext2D, viewport: CanvasViewport): void => {
     resolveColors();
     const { columns, rows, heights } = waveGrid.getState();
     const pixels = imageData.data;
@@ -195,8 +162,7 @@ export function createWaterSurfaceEffect(
         const height = heights[index] ?? 0;
         const slopeX = (right - left) / maxHeight;
         const slopeY = (bottom - top) / maxHeight;
-        const light =
-          -slopeX * 0.72 - slopeY * 0.48 + (height / maxHeight) * 0.12;
+        const light = -slopeX * 0.72 - slopeY * 0.48 + (height / maxHeight) * 0.12;
         const target = light >= 0 ? highlightColor : shadowColor;
 
         const waveIntensity = Math.min(1, Math.abs(light) * 3.2);
@@ -205,21 +171,14 @@ export function createWaterSurfaceEffect(
 
         const pixelIndex = index * 4;
 
-        pixels[pixelIndex] = Math.round(
-          mixChannel(baseColor.r, target.r, colorStrength),
-        );
+        pixels[pixelIndex] = Math.round(mixChannel(baseColor.r, target.r, colorStrength));
 
-        pixels[pixelIndex + 1] = Math.round(
-          mixChannel(baseColor.g, target.g, colorStrength),
-        );
+        pixels[pixelIndex + 1] = Math.round(mixChannel(baseColor.g, target.g, colorStrength));
 
-        pixels[pixelIndex + 2] = Math.round(
-          mixChannel(baseColor.b, target.b, colorStrength),
-        );
+        pixels[pixelIndex + 2] = Math.round(mixChannel(baseColor.b, target.b, colorStrength));
 
         pixels[pixelIndex + 3] = Math.round(
-          255 *
-            Math.min(1, Math.max(0, waveIntensity * config.opacity * target.a)),
+          255 * Math.min(1, Math.max(0, waveIntensity * config.opacity * target.a))
         );
       }
     }
@@ -234,7 +193,7 @@ export function createWaterSurfaceEffect(
   const applyPointerImpulse = (
     state: Readonly<PointerState>,
     radius: number,
-    strength: number,
+    strength: number
   ): void => {
     const point = getGridPoint(state, waveGrid);
     waveGrid.applyImpulse(point.x, point.y, radius, strength);
@@ -256,7 +215,7 @@ export function createWaterSurfaceEffect(
 
     onDown: (state) => {
       applyPointerImpulse(state, config.clickRadius, config.clickStrength);
-    },
+    }
   });
 
   const engine = createCanvasEngine(
@@ -266,9 +225,9 @@ export function createWaterSurfaceEffect(
       onFrame: ({ context, viewport, deltaTime }) => {
         waveGrid.step(deltaTime);
         renderSurface(context, viewport);
-      },
+      }
     },
-    { autoStart: false, maxDpr: config.maxDpr },
+    { autoStart: false, maxDpr: config.maxDpr }
   );
 
   resizeSurface(engine.getViewport());
@@ -287,11 +246,10 @@ export function createWaterSurfaceEffect(
         tension: config.tension,
         damping: config.damping,
         spread: config.spread,
-        maxHeight: config.maxHeight,
+        maxHeight: config.maxHeight
       });
       colorsDirty = true;
-      if (previousResolution !== config.resolution)
-        resizeSurface(engine.getViewport());
+      if (previousResolution !== config.resolution) resizeSurface(engine.getViewport());
       if (previousMaxDpr !== config.maxDpr) engine.setMaxDpr(config.maxDpr);
     },
     destroy: () => {
@@ -299,6 +257,6 @@ export function createWaterSurfaceEffect(
       destroyed = true;
       pointer.destroy();
       engine.destroy();
-    },
+    }
   };
 }

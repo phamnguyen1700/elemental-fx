@@ -1,0 +1,114 @@
+import { Vec3 } from "../../core/math/vec3";
+import { mergeFoliagePreset } from "../../effects/foliage-layer/config";
+import type {
+  FoliagePreset,
+  FoliagePresetOverrides
+} from "../../effects/foliage-layer/types";
+
+export const bougainvilleaPreset: FoliagePreset = {
+  network: {
+    anchorEvery: 4,
+    anchorStiffness: 0.09,
+    anchorStrategy: "distributed",
+    bendStiffness: 0.075,
+    curvature: 0.62,
+    damping: (_index, _total, context) =>
+      context.mode === "paths" ? 0.968 + context.depth * 0.01 : 0.975,
+    edgeBias: 0.94,
+    flexibility: (_index, _total, context) =>
+      context.mode === "paths" ? 0.78 + context.depth * 0.5 : 1,
+    mass: (_index, _total, context) =>
+      context.mode === "paths" ? 1.35 - context.depth * 0.34 : 1,
+    mode: "paths",
+    nodesPerPath: 16,
+    orientationVariation: 0.88,
+    overlap: 0.76,
+    pathCount: 18,
+    pathLength: 0.98,
+    pathLengthVariation: 0.24,
+    preferredDirection: new Vec3(0, -1, 0),
+    seed: 5000,
+    stiffness: 0.68,
+    variation: 0.85
+  },
+  growth: {
+    attachmentStiffness: 0.92,
+    branchAngle: [0.4, 1.16],
+    branchBendStiffness: 0.075,
+    branchCurvature: 0.36,
+    branchDamping: 0.958,
+    branchLength: [38, 66],
+    branchMass: 0.72,
+    branchNodeCount: [3, 5],
+    branchProbability: 0.68,
+    branchRootStiffness: 0.13,
+    branchStiffness: 0.63,
+    carrierDamping: 0.965,
+    carrierMass: 0.8,
+    density: 1,
+    densityModulation: 0.2,
+    depthOffset: 5,
+    flexibility: 1.12,
+    flowerProbability: 0.34,
+    leafProbability: 0.58,
+    maxBranches: 240,
+    maxGrowthNodes: 420,
+    seed: 5037,
+    spacing: 29,
+    spacingJitter: 0.2,
+    variation: 0.85
+  },
+  interaction: {
+    depthFalloff: 0.018,
+    lift: 14,
+    radius: 34,
+    strength: 16,
+    velocityScale: 2.1
+  },
+  wind: null,
+  gravity: null,
+  depth: {
+    pointerPlane: 28,
+    spread: 58
+  },
+  distribution: {
+    branchFlexibility: [0.8, 1.12],
+    branchFlutter: [0.48, 0.82],
+    branchScale: [0.88, 1.08],
+    depthJitter: 5,
+    flowerFlexibility: [1.05, 1.42],
+    flowerFlutter: [0.9, 1.34],
+    flowerScale: [12, 18],
+    lateralSpread: 3.5,
+    leafFlexibility: [0.86, 1.24],
+    leafFlutter: [0.72, 1.12],
+    leafScale: [10, 15],
+    maxInstances: 1200,
+    secondaryFlowerProbability: 0.16,
+    secondaryLeafProbability: 0.24,
+    seed: 5000,
+    structuralOverlap: 1.14,
+    variation: 0.85
+  },
+  render: {
+    alphaCutoff: 0.035,
+    ambientLight: 0.72,
+    atlasResolution: 256,
+    backlight: 0.2,
+    branchStemColor: [0.12, 0.25, 0.075, 0.72],
+    branchStemWidth: 0.86,
+    contactShadow: 0.14,
+    depthDarkening: 0.24,
+    directionalLight: 0.42,
+    flutterStrength: 1,
+    idleFlutter: 0,
+    stemColor: [0.075, 0.18, 0.045, 0.8],
+    stemWidth: 1.15
+  }
+};
+
+export function createBougainvilleaPreset(
+  overrides: FoliagePresetOverrides = {}
+): FoliagePreset {
+  return mergeFoliagePreset(bougainvilleaPreset, overrides);
+}

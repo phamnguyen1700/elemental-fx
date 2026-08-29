@@ -12,6 +12,12 @@ export default defineConfig({
       ),
       "@elemental-fx/fluid-effects/react": fileURLToPath(
         new URL("../../packages/fluid-effects/react/index.ts", import.meta.url)
+      ),
+      "@elemental-fx/deformable-effects/react": fileURLToPath(
+        new URL("../../packages/deformable-effects/react/index.ts", import.meta.url)
+      ),
+      "@elemental-fx/deformable-effects": fileURLToPath(
+        new URL("../../packages/deformable-effects/index.ts", import.meta.url)
       )
     }
   }

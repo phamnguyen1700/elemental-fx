@@ -8,13 +8,7 @@ const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 export default tseslint.config(
   {
-    ignores: [
-      "**/dist/**",
-      "**/coverage/**",
-      "**/node_modules/**",
-      "**/.next/**",
-      "**/.vite/**",
-    ],
+    ignores: ["**/dist/**", "**/coverage/**", "**/node_modules/**", "**/.next/**", "**/.vite/**"]
   },
   js.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
@@ -22,23 +16,20 @@ export default tseslint.config(
     languageOptions: {
       parserOptions: {
         projectService: {
-          allowDefaultProject: ["quality/*.js"],
+          allowDefaultProject: ["quality/*.js"]
         },
-        tsconfigRootDir: rootDir,
-      },
+        tsconfigRootDir: rootDir
+      }
     },
     plugins: {
-      "react-hooks": reactHooks,
+      "react-hooks": reactHooks
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
-      "@typescript-eslint/consistent-type-imports": [
-        "error",
-        { prefer: "type-imports" },
-      ],
+      "@typescript-eslint/consistent-type-imports": ["error", { prefer: "type-imports" }],
       "@typescript-eslint/no-floating-promises": "error",
-      "@typescript-eslint/no-misused-promises": "error",
-    },
+      "@typescript-eslint/no-misused-promises": "error"
+    }
   },
   {
     files: ["scripts/**/*.mjs"],
@@ -46,8 +37,8 @@ export default tseslint.config(
     languageOptions: {
       globals: {
         console: "readonly",
-        process: "readonly",
-      },
-    },
-  },
+        process: "readonly"
+      }
+    }
+  }
 );

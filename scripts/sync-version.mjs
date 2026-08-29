@@ -7,8 +7,9 @@ const rootPackagePath = resolve(root, "package.json");
 
 const packagePaths = [
   "packages/canvas-effects/package.json",
+  "packages/deformable-effects/package.json",
   "packages/fluid-effects/package.json",
-  "packages/cli/package.json",
+  "packages/cli/package.json"
 ];
 
 const rootPackage = JSON.parse(await readFile(rootPackagePath, "utf8"));
@@ -25,11 +26,7 @@ for (const relativePath of packagePaths) {
 
   packageJson.version = version;
 
-  await writeFile(
-    packagePath,
-    `${JSON.stringify(packageJson, null, 2)}\n`,
-    "utf8",
-  );
+  await writeFile(packagePath, `${JSON.stringify(packageJson, null, 2)}\n`, "utf8");
 
   console.log(`Synced ${packageJson.name} -> ${version}`);
 }
@@ -37,11 +34,7 @@ for (const relativePath of packagePaths) {
 // Sync version used by the CLI when installing runtime packages
 const cliVersionPath = resolve(root, "packages/cli/src/version.ts");
 
-await writeFile(
-  cliVersionPath,
-  `export const ELEMENTAL_FX_VERSION = "${version}";\n`,
-  "utf8",
-);
+await writeFile(cliVersionPath, `export const ELEMENTAL_FX_VERSION = "${version}";\n`, "utf8");
 
 console.log(`Synced CLI runtime version -> ${version}`);
 console.log(`All elemental-fx packages synced to ${version}.`);

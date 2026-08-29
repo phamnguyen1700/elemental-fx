@@ -5,7 +5,9 @@
     "noEmit": true,
     "paths": {
       "@elemental-fx/canvas-effects/react": ["../../packages/canvas-effects/react/index.ts"],
-      "@elemental-fx/fluid-effects/react": ["../../packages/fluid-effects/react/index.ts"]
+      "@elemental-fx/fluid-effects/react": ["../../packages/fluid-effects/react/index.ts"],
+      "@elemental-fx/deformable-effects": ["../../packages/deformable-effects/index.ts"],
+      "@elemental-fx/deformable-effects/react": ["../../packages/deformable-effects/react/index.ts"]
     },
     "types": ["node", "vite/client"]
   },

@@ -12,10 +12,7 @@ export interface PointerState {
   pointerType: string;
 }
 
-export type PointerHandler = (
-  state: Readonly<PointerState>,
-  event: PointerEvent,
-) => void;
+export type PointerHandler = (state: Readonly<PointerState>, event: PointerEvent) => void;
 
 export interface PointerTrackerOptions {
   onMove?: PointerHandler;
@@ -38,8 +35,7 @@ export interface PointerTracker {
   destroy(): void;
 }
 
-type PointerEventName =
-  "pointermove" | "pointerdown" | "pointerup" | "pointercancel";
+type PointerEventName = "pointermove" | "pointerdown" | "pointerup" | "pointercancel";
 
 function clamp01(value: number): number {
   return Math.min(1, Math.max(0, value));
@@ -48,7 +44,7 @@ function clamp01(value: number): number {
 function addPointerListener(
   target: Window | HTMLElement,
   type: PointerEventName,
-  listener: (event: PointerEvent) => void,
+  listener: (event: PointerEvent) => void
 ): void {
   if (target instanceof HTMLElement) {
     target.addEventListener(type, listener);
@@ -61,7 +57,7 @@ function addPointerListener(
 function removePointerListener(
   target: Window | HTMLElement,
   type: PointerEventName,
-  listener: (event: PointerEvent) => void,
+  listener: (event: PointerEvent) => void
 ): void {
   if (target instanceof HTMLElement) {
     target.removeEventListener(type, listener);
@@ -73,7 +69,7 @@ function removePointerListener(
 
 export function createPointerTracker(
   element: HTMLCanvasElement,
-  options: PointerTrackerOptions = {},
+  options: PointerTrackerOptions = {}
 ): PointerTracker {
   const eventTarget = options.eventTarget ?? element;
 
@@ -88,7 +84,7 @@ export function createPointerTracker(
     velocityY: 0,
     inside: false,
     down: false,
-    pointerType: "mouse",
+    pointerType: "mouse"
   };
 
   let previousTime = 0;
@@ -108,14 +104,12 @@ export function createPointerTracker(
     const x = event.clientX - bounds.left;
     const y = event.clientY - bounds.top;
 
-    const isInside =
-      x >= 0 && y >= 0 && x <= bounds.width && y <= bounds.height;
+    const isInside = x >= 0 && y >= 0 && x <= bounds.width && y <= bounds.height;
 
     const deltaX = state.inside ? x - state.x : 0;
     const deltaY = state.inside ? y - state.y : 0;
 
-    const elapsed =
-      previousTime > 0 ? Math.max(1, event.timeStamp - previousTime) / 1000 : 0;
+    const elapsed = previousTime > 0 ? Math.max(1, event.timeStamp - previousTime) / 1000 : 0;
 
     state.x = x;
     state.y = y;
@@ -189,10 +183,7 @@ export function createPointerTracker(
 
     state.down = false;
 
-    if (
-      eventTarget === element &&
-      element.hasPointerCapture?.(event.pointerId)
-    ) {
+    if (eventTarget === element && element.hasPointerCapture?.(event.pointerId)) {
       element.releasePointerCapture(event.pointerId);
     }
 
@@ -257,6 +248,6 @@ export function createPointerTracker(
       if (eventTarget === element) {
         element.removeEventListener("pointerleave", onPointerLeave);
       }
-    },
+    }
   };
 }
