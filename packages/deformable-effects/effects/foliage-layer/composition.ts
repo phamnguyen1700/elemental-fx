@@ -21,6 +21,16 @@ import { resolveFoliageLayerPreset } from "./config";
 import { buildVineDistribution } from "./distribution";
 import type { VineDistribution } from "./distribution";
 import { createFoliagePathEndpointResolvers } from "./path-layout";
+import {
+  annotateVineLayoutRegion,
+  combineVineLayoutTopologies,
+  createVineLayoutRegionWeightResolver,
+  resolveVineLayout,
+  resolveVineLayoutPathCounts,
+  resolveVineLayoutRegionBounds,
+} from "./vine-layout";
+
+import type { ResolvedVineLayout } from "./vine-layout";
 import type { FoliageLayerConfig, FoliagePreset, VineSizeValue } from "./types";
 
 export interface FoliageProjectionBounds {
@@ -45,6 +55,7 @@ export interface FoliageComposition {
   area: ResolvedEffectArea;
   density: number;
   variation: number;
+  layout: ResolvedVineLayout;
   destroy(): void;
 }
 
@@ -62,6 +73,7 @@ export function createFoliageComposition(
   );
   const variation = clamp01(config.variation ?? preset.growth.variation);
   const density = clamp(config.density ?? 1, 0.15, 3);
+  const layout = resolveVineLayout(config.layout, variation);
   applyVineSize(preset, config.size);
   preset.network.variation = variation;
   preset.growth.variation = variation;
@@ -93,66 +105,155 @@ export function createFoliageComposition(
     1,
     Math.round((preset.network.pathCount ?? 18) * budget.nodeScale),
   );
-  const pathCount = Math.max(
+
+  const maxPathCountByNodes = Math.max(
     1,
-    Math.min(
-      qualityPathCount,
-      Math.floor(mainNodeCap / Math.max(1, nodesPerPath * density)),
-    ),
+    Math.floor(mainNodeCap / Math.max(1, nodesPerPath)),
   );
+
+  const desiredPathCount = Math.max(
+    1,
+    Math.round(qualityPathCount * density * layout.pathCountScale),
+  );
+
+  const minimumRegionCount = Math.min(
+    layout.spatial.regions.length,
+    maxPathCountByNodes,
+  );
+
+  const totalPathCount = Math.min(
+    maxPathCountByNodes,
+    Math.max(minimumRegionCount, desiredPathCount),
+  );
+
+  const regionPathCounts = resolveVineLayoutPathCounts(totalPathCount, layout);
+
   const seed = preset.network.seed ?? preset.distribution.seed;
-  const pathEndpoints = createFoliagePathEndpointResolvers({ seed, variation });
-  const mainTopology = buildNetworks({
-    ...preset.network,
-    bounds: networkBounds,
-    density,
-    depth: [-preset.depth.spread, preset.depth.spread],
-    endPosition: preset.network.endPosition ?? pathEndpoints.endPosition,
-    mode: "paths",
-    nodesPerPath,
-    pathCount,
-    seed,
-    startPosition: preset.network.startPosition ?? pathEndpoints.startPosition,
-    variation,
+
+  const regionTopologies: TopologyResult[] = [];
+
+  let globalPathOffset = 0;
+
+  layout.spatial.regions.forEach((region, regionIndex) => {
+    const regionPathCount = regionPathCounts[regionIndex] ?? 0;
+
+    if (regionPathCount <= 0) {
+      return;
+    }
+
+    const regionBounds = resolveVineLayoutRegionBounds(
+      networkBounds,
+      region,
+      layout,
+    );
+
+    const regionSeed = seed + regionIndex * 1009;
+
+    const fieldWeight = createVineLayoutRegionWeightResolver(layout, region);
+
+    const pathEndpoints = createFoliagePathEndpointResolvers({
+      fieldWeight,
+      role: region.role,
+      seed: regionSeed,
+      variation: layout.spatial.variation,
+    });
+
+    const regionTopology = buildNetworks({
+      ...preset.network,
+
+      bounds: regionBounds,
+
+      /**
+       * Path budget has already been resolved globally and distributed
+       * across layout regions.
+       */
+      density: 1,
+
+      depth: [-preset.depth.spread, preset.depth.spread],
+
+      /**
+       * Foliage owns its path-placement policy.
+       *
+       * All layouts use the same wall-clinging biological grammar;
+       * the layout role only changes its spatial orientation.
+       */
+      startPosition: pathEndpoints.startPosition,
+
+      endPosition: pathEndpoints.endPosition,
+
+      mode: "paths",
+
+      nodesPerPath,
+
+      pathCount: regionPathCount,
+
+      seed: regionSeed,
+
+      variation,
+    });
+
+    globalPathOffset = annotateVineLayoutRegion(
+      regionTopology,
+      region,
+      globalPathOffset,
+    );
+
+    regionTopologies.push(regionTopology);
   });
+
+  const mainTopology = combineVineLayoutTopologies(regionTopologies);
+  const growthDensity = clamp(density * layout.growthDensityScale, 0.15, 3);
   const vine = buildVineGrowth(mainTopology, {
     ...preset.growth,
-    density,
+
+    density: growthDensity,
+
+    spacing: Math.max(5, preset.growth.spacing * layout.spacingScale),
+
     maxBranches: Math.max(
       1,
       Math.round(preset.growth.maxBranches * budget.nodeScale),
     ),
+
     maxGrowthNodes: Math.max(
       1,
       Math.round(preset.growth.maxGrowthNodes * budget.nodeScale),
     ),
+
     variation,
   });
-  const hangingTopology =
-    config.hanging?.enabled === true
-      ? buildHangingStrands({
-          strandCount: config.hanging.strandCount ?? 8,
-          nodesPerStrand: config.hanging.nodesPerStrand ?? 8,
+  const hangingEnabled =
+    config.hanging?.enabled ?? layout.spatial.mode === "top";
 
-          length: config.hanging.length ?? 72,
-          lengthVariation: config.hanging.lengthVariation ?? 0.38,
+  const isTopLayout = layout.spatial.mode === "top";
 
-          variation,
+  const hangingTopology = hangingEnabled
+    ? buildHangingStrands({
+        strandCount: config.hanging?.strandCount ?? (isTopLayout ? 12 : 8),
 
-          rootJitter:
-            config.hanging.rootJitter ??
-            new Vec3(3, 2, preset.depth.spread * 0.18),
+        nodesPerStrand: config.hanging?.nodesPerStrand ?? 8,
 
-          seed: seed + 7919,
+        length: config.hanging?.length ?? (isTopLayout ? 78 : 72),
 
-          segmentStiffness: config.hanging.segmentStiffness ?? 0.94,
+        lengthVariation:
+          config.hanging?.lengthVariation ?? (isTopLayout ? 0.58 : 0.38),
 
-          bendStiffness: config.hanging.bendStiffness ?? 0.14,
+        variation,
 
-          rootDistribution: (index, total) =>
-            resolveHangingRoot(vine, index, total, networkBounds),
-        })
-      : null;
+        rootJitter:
+          config.hanging?.rootJitter ??
+          new Vec3(isTopLayout ? 6 : 3, 2, preset.depth.spread * 0.18),
+
+        seed: seed + 7919,
+
+        segmentStiffness: config.hanging?.segmentStiffness ?? 0.94,
+
+        bendStiffness: config.hanging?.bendStiffness ?? 0.14,
+
+        rootDistribution: (index, total) =>
+          resolveHangingRoot(vine, index, total, networkBounds),
+      })
+    : null;
 
   const topology = hangingTopology
     ? combineTopologies(vine.topology, hangingTopology)
@@ -169,7 +270,7 @@ export function createFoliageComposition(
       ),
       variation,
     },
-    density,
+    growthDensity,
     hangingTopology?.groups?.strands ?? [],
   );
   const scene = createDeformableScene({
@@ -179,30 +280,68 @@ export function createFoliageComposition(
   const pointerSweep = new PointerSweepForce(preset.interaction);
   const wind = preset.wind ? new WindForce(preset.wind) : null;
   const gravity = preset.gravity ? new GravityForce(preset.gravity) : null;
+  const hangingNodeSet = new Set(hangingTopology?.nodes ?? []);
+
+  const hangingGravity = hangingTopology
+    ? new GravityForce(
+        config.hanging?.gravity ?? new Vec3(0, 9.8, 0),
+
+        (node) => hangingNodeSet.has(node),
+      )
+    : null;
   scene.addForce(pointerSweep);
   if (wind) scene.addForce(wind);
   if (gravity) scene.addForce(gravity);
-
+  if (hangingGravity) {
+    scene.addForce(hangingGravity);
+  }
   topology.metadata = {
     ...topology.metadata,
     area,
     density,
+
+    effectiveDensity: growthDensity,
+
     depthSpread: preset.depth.spread,
+
     effect: "vine-layer",
     publicEffect: "foliage-layer",
+
+    growthModel: "wall-cling",
+
     hanging: hangingTopology !== null,
+
+    vineLayout: layout.spatial.mode,
+
+    vineLayoutRegionCount: layout.spatial.regions.length,
+
+    vineLayoutFeather: layout.spatial.feather,
+
+    vineLayoutCornerRadius: layout.spatial.cornerRadius,
+
     variation,
   };
 
   return {
     area,
     assets,
-    bounds: { depthRange, halfHeight, halfWidth },
+
+    bounds: {
+      depthRange,
+      halfHeight,
+      halfWidth,
+    },
+
     density,
+
     destroy: () => scene.destroy(),
+
     distribution,
     gravity,
     hangingTopology,
+
+    layout,
+
     networkBounds,
     pointerSweep,
     preset,
@@ -241,14 +380,33 @@ function applyVineSize(
   size: FoliageLayerConfig["size"],
 ): void {
   if (!size) return;
+
+  /**
+   * Common structural scale.
+   */
   preset.distribution.branchScale = scaleRange(
     preset.distribution.branchScale,
     size.branch ?? size.base,
   );
+
+  /**
+   * Hierarchy-specific structural scales.
+   */
+  preset.distribution.mainBranchScale = scaleRange(
+    preset.distribution.mainBranchScale,
+    size.mainBranch,
+  );
+
+  preset.distribution.secondaryBranchScale = scaleRange(
+    preset.distribution.secondaryBranchScale,
+    size.secondaryBranch,
+  );
+
   preset.distribution.flowerScale = scaleRange(
     preset.distribution.flowerScale,
     size.flower,
   );
+
   preset.distribution.leafScale = scaleRange(
     preset.distribution.leafScale,
     size.leaf,
@@ -323,28 +481,78 @@ function resolveHangingRoot(
   total: number,
   bounds: NetworkBounds,
 ): Vec3 {
-  const paths = vine.mainPaths;
+  const candidates = vine.mainPaths.flatMap((path) => path);
 
-  if (paths.length === 0) {
+  /**
+   * Fallback when no canopy topology exists.
+   */
+  if (candidates.length === 0) {
     const t = total <= 1 ? 0.5 : index / Math.max(1, total - 1);
 
-    return new Vec3(lerp(bounds.min.x, bounds.max.x, t), bounds.min.y, 0);
+    return new Vec3(
+      lerp(bounds.min.x, bounds.max.x, t),
+
+      bounds.min.y,
+
+      0,
+    );
   }
 
-  const path = paths[index % paths.length];
-
-  if (!path || path.length === 0) {
-    return new Vec3((bounds.min.x + bounds.max.x) * 0.5, bounds.min.y, 0);
-  }
-
+  /**
+   * Each strand owns one target position across the complete canopy width.
+   *
+   * index 0         -> left
+   * middle indexes  -> interior
+   * final index     -> right
+   */
   const t = total <= 1 ? 0.5 : index / Math.max(1, total - 1);
 
-  const nodeIndex = Math.min(
-    path.length - 1,
-    Math.max(0, Math.round(t * (path.length - 1))),
-  );
+  const targetX = lerp(bounds.min.x, bounds.max.x, t);
 
-  return path[nodeIndex]!.restPosition.clone();
+  let bestNode = candidates[0]!;
+
+  let bestScore = resolveHangingRootScore(bestNode, targetX, bounds);
+
+  for (
+    let candidateIndex = 1;
+    candidateIndex < candidates.length;
+    candidateIndex++
+  ) {
+    const candidate = candidates[candidateIndex]!;
+
+    const score = resolveHangingRootScore(candidate, targetX, bounds);
+
+    if (score < bestScore) {
+      bestNode = candidate;
+      bestScore = score;
+    }
+  }
+
+  return bestNode.restPosition.clone();
+}
+
+function resolveHangingRootScore(
+  node: TopologyResult["nodes"][number],
+  targetX: number,
+  bounds: NetworkBounds,
+): number {
+  const position = node.restPosition;
+
+  const width = Math.max(0.0001, bounds.max.x - bounds.min.x);
+
+  const height = Math.max(0.0001, bounds.max.y - bounds.min.y);
+
+  /**
+   * Horizontal position is the dominant criterion.
+   *
+   * A smaller secondary Y penalty prefers nodes nearer the upper wall edge
+   * when several canopy nodes occupy roughly the same horizontal lane.
+   */
+  const xDistance = Math.abs(position.x - targetX) / width;
+
+  const topDistance = Math.abs(position.y - bounds.min.y) / height;
+
+  return xDistance + topDistance * 0.14;
 }
 
 function combineTopologies(

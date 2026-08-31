@@ -12,10 +12,10 @@ describe("vine composition", () => {
         assets: { branches: [asset("branch-a")] },
         density: 0.35,
         quality: "low",
-        seed: 14
+        seed: 14,
       },
       1.4,
-      1
+      1,
     );
 
     expect(composition.topology.metadata?.mode).toBe("paths");
@@ -26,26 +26,32 @@ describe("vine composition", () => {
     expect(composition.pointerSweep).toBeInstanceOf(PointerSweepForce);
     expect(composition.wind).toBeNull();
     expect(composition.gravity).toBeNull();
-    expect(composition.scene.engine.nodes).toHaveLength(composition.topology.nodes.length);
+    expect(composition.scene.engine.nodes).toHaveLength(
+      composition.topology.nodes.length,
+    );
     composition.destroy();
     expect(composition.scene.destroyed).toBe(true);
   });
 
   it("maps full and partial areas directly into main-vine bounds", () => {
     const full = createFoliageComposition(
-      { assets: { branches: [asset("branch-a")] }, density: 0.2, quality: "low" },
+      {
+        assets: { branches: [asset("branch-a")] },
+        density: 0.2,
+        quality: "low",
+      },
       1,
-      1
+      1,
     );
     const partial = createFoliageComposition(
       {
         area: { alignX: "right", alignY: "bottom", height: 0.5, width: 0.4 },
         assets: { branches: [asset("branch-a")] },
         density: 0.2,
-        quality: "low"
+        quality: "low",
       },
       1,
-      1
+      1,
     );
 
     expect(full.networkBounds.min.x).toBeCloseTo(-96);
@@ -59,8 +65,8 @@ describe("vine composition", () => {
             node.restPosition.x >= partial.networkBounds.min.x &&
             node.restPosition.x <= partial.networkBounds.max.x &&
             node.restPosition.y >= partial.networkBounds.min.y &&
-            node.restPosition.y <= partial.networkBounds.max.y
-        )
+            node.restPosition.y <= partial.networkBounds.max.y,
+        ),
     ).toBe(true);
     full.destroy();
     partial.destroy();
@@ -70,14 +76,24 @@ describe("vine composition", () => {
     const common = {
       assets: { branches: [asset("branch-a")] },
       quality: "high" as const,
-      seed: 22
+      seed: 22,
     };
-    const sparse = createFoliageComposition({ ...common, density: 0.45 }, 1.3, 1);
+    const sparse = createFoliageComposition(
+      { ...common, density: 0.45 },
+      1.3,
+      1,
+    );
     const dense = createFoliageComposition({ ...common, density: 1.6 }, 1.3, 1);
 
-    expect(dense.vine.mainPaths.length).toBeGreaterThan(sparse.vine.mainPaths.length);
-    expect(dense.vine.growthNodes.length).toBeGreaterThan(sparse.vine.growthNodes.length);
-    expect(dense.vine.branches.length).toBeGreaterThan(sparse.vine.branches.length);
+    expect(dense.vine.mainPaths.length).toBeGreaterThan(
+      sparse.vine.mainPaths.length,
+    );
+    expect(dense.vine.growthNodes.length).toBeGreaterThan(
+      sparse.vine.growthNodes.length,
+    );
+    expect(dense.vine.branches.length).toBeGreaterThan(
+      sparse.vine.branches.length,
+    );
     sparse.destroy();
     dense.destroy();
   });
@@ -88,29 +104,32 @@ describe("vine composition", () => {
       density: 0.35,
       growth: { branchProbability: 1 },
       quality: "low" as const,
-      seed: 31
+      seed: 31,
     };
     const defaultSize = createFoliageComposition(common, 1, 1);
     const smaller = createFoliageComposition(
       {
         ...common,
         size: { branch: 0.5, flower: 0.6, leaf: 0.7 },
-        variation: 0,
-        wind: { strength: 0.3 }
+        wind: { strength: 0.3 },
       },
       1,
-      1
+      1,
     );
     const defaultBranch = defaultSize.distribution.instances.find(
-      (instance) => instance.kind === "branch"
+      (instance) => instance.kind === "branch",
     );
     const smallerBranch = smaller.distribution.instances.find(
-      (instance) => instance.kind === "branch"
+      (instance) => instance.kind === "branch",
     );
 
-    expect(smallerBranch?.scale).toBeLessThan(defaultBranch?.scale ?? 0);
+    expect(smallerBranch?.crossScale).toBeLessThan(
+      defaultBranch?.crossScale ?? 0,
+    );
     expect(smaller.wind).toBeInstanceOf(WindForce);
-    expect(smaller.vine.mainPaths).toHaveLength(defaultSize.vine.mainPaths.length);
+    expect(smaller.vine.mainPaths).toHaveLength(
+      defaultSize.vine.mainPaths.length,
+    );
     defaultSize.destroy();
     smaller.destroy();
   });
@@ -121,14 +140,63 @@ describe("vine composition", () => {
         assets: { branches: [asset("branch-a")] },
         density: 1,
         network: { pathCount: 1 },
-        quality: "high"
+        quality: "high",
       },
       2,
-      1
+      1,
     );
 
     expect(composition.vine.mainPaths).toHaveLength(1);
     expect(composition.vine.growthNodes.length).toBeGreaterThan(3);
+    composition.destroy();
+  });
+
+  it("creates four independent corner regions", () => {
+    const composition = createFoliageComposition(
+      {
+        assets: {
+          branches: [asset("branch-a")],
+        },
+        density: 1,
+        layout: {
+          mode: "corners",
+          thickness: 0.3,
+        },
+        network: {
+          pathCount: 20,
+        },
+        quality: "high",
+        seed: 91,
+      },
+      1,
+      1,
+    );
+
+    expect(
+      composition.layout.spatial.regions.map((region) => region.role),
+    ).toEqual(["top-left", "top-right", "bottom-left", "bottom-right"]);
+
+    composition.destroy();
+  });
+
+  it("supports adjustable top height", () => {
+    const composition = createFoliageComposition(
+      {
+        assets: {
+          branches: [asset("branch-a")],
+        },
+        layout: {
+          mode: "top",
+          thickness: 1 / 3,
+        },
+        quality: "low",
+      },
+      1,
+      1,
+    );
+
+    expect(composition.layout.spatial.regions[0]?.height).toBeCloseTo(1 / 3);
+
     composition.destroy();
   });
 });

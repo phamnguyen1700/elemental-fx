@@ -8,7 +8,7 @@ import type { VineLayerConfig } from "./types";
 
 export function createVineLayerEffect(
   canvas: HTMLCanvasElement,
-  initialConfig: VineLayerConfig
+  initialConfig: VineLayerConfig,
 ): DeformableEffectHandle<VineLayerConfig> {
   let config = initialConfig;
   let composition: FoliageComposition | null = null;
@@ -24,14 +24,16 @@ export function createVineLayerEffect(
   let settleMinUntil = 0;
   let settleMaxUntil = 0;
   let removePointerListeners = () => {};
-  const reducedMotion = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)");
+  const reducedMotion = globalThis.matchMedia?.(
+    "(prefers-reduced-motion: reduce)",
+  );
   let reduceMotion = Boolean(reducedMotion?.matches);
 
   const gl = canvas.getContext("webgl2", {
     alpha: true,
     antialias: true,
     depth: true,
-    premultipliedAlpha: true
+    premultipliedAlpha: true,
   });
   if (!gl) throw new Error("VineLayer requires WebGL 2.");
 
@@ -55,11 +57,15 @@ export function createVineLayerEffect(
     composition?.destroy();
     composition = null;
     try {
-      const next = createFoliageComposition(config, cssWidth / Math.max(1, cssHeight), dpr);
+      const next = createFoliageComposition(
+        config,
+        cssWidth / Math.max(1, cssHeight),
+        dpr,
+      );
       const renderer = new FoliageSceneRenderer(gl, next, {
         debug: config.debug ?? false,
         onError: reportError,
-        onReady: renderOnce
+        onReady: renderOnce,
       });
       next.scene.addRenderer(renderer);
       composition = next;
@@ -106,7 +112,7 @@ export function createVineLayerEffect(
           ? {
               halfHeight: composition.bounds.halfHeight,
               halfWidth: composition.bounds.halfWidth,
-              pointerPlane: composition.preset.depth.pointerPlane
+              pointerPlane: composition.preset.depth.pointerPlane,
             }
           : null,
       onReset: clearPointerSweep,
@@ -116,13 +122,15 @@ export function createVineLayerEffect(
         composition.pointerSweep.updatePointer(to, true);
         pointerPending = true;
         wakeForInteraction();
-      }
+      },
     });
   };
 
   const hasContinuousMotion = () =>
     Boolean(
-      composition?.wind || composition?.gravity || (composition?.preset.render.idleFlutter ?? 0) > 0
+      composition?.wind ||
+      composition?.gravity ||
+      (composition?.preset.render.idleFlutter ?? 0) > 0,
     );
 
   const hasPhysicalMotion = () =>
@@ -131,19 +139,22 @@ export function createVineLayerEffect(
         (node) =>
           !node.isPinned &&
           (node.velocity.lengthSq() > 0.0001 ||
-            node.position.distanceToSq(node.restPosition) > 0.001)
-      )
+            node.position.distanceToSq(node.restPosition) > 0.001),
+      ),
     );
 
   const shouldAnimate = () => {
     if (!requestedRunning || hidden || reduceMotion || destroyed) return false;
     if (hasContinuousMotion()) return true;
     const now = performance.now();
-    return now < settleMinUntil || (now < settleMaxUntil && hasPhysicalMotion());
+    return (
+      now < settleMinUntil || (now < settleMaxUntil && hasPhysicalMotion())
+    );
   };
 
   const scheduleFrame = () => {
-    if (frameId === 0 && shouldAnimate()) frameId = requestAnimationFrame(frame);
+    if (frameId === 0 && shouldAnimate())
+      frameId = requestAnimationFrame(frame);
   };
 
   const wakeForInteraction = () => {
@@ -250,7 +261,7 @@ export function createVineLayerEffect(
       canvas.removeEventListener("webglcontextrestored", handleContextRestored);
       composition?.destroy();
       composition = null;
-    }
+    },
   };
 }
 
@@ -259,7 +270,7 @@ export const createFoliageLayerEffect = createVineLayerEffect;
 
 function mergeLayerConfig(
   current: VineLayerConfig,
-  next: Partial<VineLayerConfig>
+  next: Partial<VineLayerConfig>,
 ): VineLayerConfig {
   const wind =
     next.wind === undefined
@@ -267,7 +278,18 @@ function mergeLayerConfig(
       : next.wind === null
         ? null
         : { ...(current.wind ?? {}), ...next.wind };
-
+  const layout =
+    next.layout === undefined
+      ? current.layout
+      : typeof next.layout === "string"
+        ? next.layout
+        : typeof current.layout === "object" &&
+            current.layout.mode === next.layout.mode
+          ? {
+              ...current.layout,
+              ...next.layout,
+            }
+          : next.layout;
   return {
     ...current,
     ...next,
@@ -276,10 +298,11 @@ function mergeLayerConfig(
     size: { ...current.size, ...next.size },
     network: { ...current.network, ...next.network },
     growth: { ...current.growth, ...next.growth },
+    ...(layout === undefined ? {} : { layout }),
     interaction: { ...current.interaction, ...next.interaction },
     ...(wind === undefined ? {} : { wind }),
     depth: { ...current.depth, ...next.depth },
     distribution: { ...current.distribution, ...next.distribution },
-    render: { ...current.render, ...next.render }
+    render: { ...current.render, ...next.render },
   };
 }

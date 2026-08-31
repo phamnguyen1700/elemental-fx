@@ -2,7 +2,10 @@ import { resolveEffectArea } from "./area";
 import { mapNormalizedRect } from "./geometry";
 import {
   createEffectLayoutPresetRegions,
+  resolveEffectLayoutCornerRadius,
+  resolveEffectLayoutFeather,
   resolveEffectLayoutThickness,
+  resolveEffectLayoutExtent,
 } from "./presets";
 import type {
   EffectArea,
@@ -23,13 +26,25 @@ export function resolveEffectLayout(
   const coverage = clamp(finiteOr(options?.coverage, 1), 0.25, 2);
   const variation = clamp01(finiteOr(options?.variation, fallbackVariation));
   const thickness = resolveEffectLayoutThickness(mode, options?.thickness);
+  const extent = resolveEffectLayoutExtent(mode, thickness);
+  const feather = resolveEffectLayoutFeather(mode, extent, options?.feather);
+
+  const cornerRadius = resolveEffectLayoutCornerRadius(
+    mode,
+    extent,
+    options?.cornerRadius,
+  );
 
   return {
     mode,
     coverage,
     thickness,
+    extent,
     variation,
-    regions: createEffectLayoutPresetRegions(mode, thickness),
+    feather,
+    cornerRadius,
+
+    regions: createEffectLayoutPresetRegions(mode, extent),
   };
 }
 
@@ -48,10 +63,16 @@ export function resolveEffectLayoutInArea(
 
   return {
     area,
+
     mode: layout.mode,
     coverage: layout.coverage,
     thickness: layout.thickness,
+    extent: layout.extent,
     variation: layout.variation,
+
+    feather: layout.feather,
+    cornerRadius: layout.cornerRadius,
+
     regions,
   };
 }

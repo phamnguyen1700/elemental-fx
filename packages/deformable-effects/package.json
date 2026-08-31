@@ -37,6 +37,9 @@
     "clean": "rimraf dist",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
+  "dependencies": {
+  "@elemental-fx/effect-layout": "workspace:*"
+  },
   "peerDependencies": {
     "react": ">=18.2.0"
   },

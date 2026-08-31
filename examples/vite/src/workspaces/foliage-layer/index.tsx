@@ -1,9 +1,11 @@
 import { useCallback, useMemo, useState } from "react";
 
 import {
-  Vec3,
   type NetworksConfig,
+  type VineCornerShape,
   type VineGrowthConfig,
+  type VineLayout,
+  type VineLayoutMode,
 } from "@elemental-fx/deformable-effects";
 import { VineLayer } from "@elemental-fx/deformable-effects/react";
 
@@ -32,51 +34,62 @@ const VINE_AREA = {
 } as const;
 
 const VINE_SIZE = {
-  branch: 1.7,
-  flower: 1.2,
-  leaf: 1.2,
+  /**
+   * Common structural scale.
+   */
+  branch: 1.1,
+
+  /**
+   * Primary runners remain visible without dominating the composition.
+   */
+  mainBranch: 0.9,
+
+  /**
+   * Secondary growth stays readable beneath flowers and leaves.
+   */
+  secondaryBranch: 1.08,
+
+  flower: 0.88,
+  leaf: 0.92,
 } as const;
 
 const VINE_NETWORK = {
   anchorEvery: 3,
   curvature: 0.72,
-  nodesPerPath: 5,
+  nodesPerPath: 8,
   orientationVariation: 0.72,
   pathCount: 20,
   pathLengthVariation: 1,
 } satisfies Partial<NetworksConfig>;
 
 const VINE_GROWTH = {
-  branchProbability: 1.5,
-  flowerProbability: 1.2,
-  leafProbability: 1.2,
-  maxBranches: 20,
-  maxGrowthNodes: 15,
-  spacing: 15,
+  branchProbability: 0.8,
+
+  flowerProbability: 0.24,
+  leafProbability: 0.48,
+
+  maxBranches: 180,
+  maxGrowthNodes: 240,
+
+  spacing: 22,
 } satisfies Partial<VineGrowthConfig>;
 
-const VINE_HANGING = {
-  enabled: true,
-  strandCount: 6,
-  nodesPerStrand: 4,
-  length: 52,
-  lengthVariation: 0.5,
-  rootJitter: new Vec3(7, 5, 4),
-  segmentStiffness: 0.92,
-  bendStiffness: 0.5,
-} as const;
-
-type CompositionMode = "foreground" | "background";
-
 export function FoliageLayerWorkspace() {
-  const [mode, setMode] = useState<CompositionMode>("foreground");
   const [seed, setSeed] = useState(5000);
-  const [density, setDensity] = useState(2.5);
+  const [density, setDensity] = useState(1.35);
   const [variation, setVariation] = useState(0.85);
   const [interactionStrength, setInteractionStrength] = useState(16);
   const [debug, setDebug] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState("Explore collection");
+
+  const [layoutMode, setLayoutMode] = useState<VineLayoutMode>("cover");
+
+  const [cornerShape, setCornerShape] = useState<VineCornerShape>("round");
+
+  const [layoutThickness, setLayoutThickness] = useState(0.3);
+
+  const [layoutCoverage, setLayoutCoverage] = useState(1);
 
   const interaction = useMemo(
     () => ({
@@ -89,33 +102,107 @@ export function FoliageLayerWorkspace() {
     [interactionStrength],
   );
 
-  const handleError = useCallback(
-    (nextError: Error) => setError(nextError.message),
-    [],
-  );
+  const vineLayout = useMemo<VineLayout>(() => {
+    if (layoutMode === "corners") {
+      return {
+        mode: "corners",
+        shape: cornerShape,
+        coverage: layoutCoverage,
+        thickness: layoutThickness,
+        variation,
+      };
+    }
+
+    if (layoutMode === "top") {
+      return {
+        mode: "top",
+        coverage: layoutCoverage,
+        thickness: layoutThickness,
+        variation,
+      };
+    }
+
+    return {
+      mode: "cover",
+      coverage: layoutCoverage,
+      variation,
+    };
+  }, [cornerShape, layoutCoverage, layoutMode, layoutThickness, variation]);
+
+  const handleError = useCallback((nextError: Error) => {
+    setError(nextError.message);
+  }, []);
 
   const controls = (
     <>
-      <div className="segmented-control" aria-label="Vine composition mode">
-        <button
-          aria-pressed={mode === "foreground"}
-          onClick={() => setMode("foreground")}
-          type="button"
-        >
-          Foreground
-        </button>
+      <label className="compact-field">
+        <span>Layout</span>
 
-        <button
-          aria-pressed={mode === "background"}
-          onClick={() => setMode("background")}
-          type="button"
+        <select
+          onChange={(event) =>
+            setLayoutMode(event.target.value as VineLayoutMode)
+          }
+          value={layoutMode}
         >
-          Background
-        </button>
-      </div>
+          <option value="cover">Cover</option>
+
+          <option value="corners">Corners</option>
+
+          <option value="top">Top</option>
+        </select>
+      </label>
+
+      {layoutMode === "corners" ? (
+        <label className="compact-field">
+          <span>Corner Shape</span>
+
+          <select
+            onChange={(event) =>
+              setCornerShape(event.target.value as VineCornerShape)
+            }
+            value={cornerShape}
+          >
+            <option value="rect">Rect</option>
+
+            <option value="round">Round</option>
+          </select>
+        </label>
+      ) : null}
+
+      <label className="range-field">
+        <span>Thickness</span>
+
+        <input
+          disabled={layoutMode === "cover"}
+          max="3"
+          min="0.08"
+          onChange={(event) => setLayoutThickness(event.target.valueAsNumber)}
+          step="0.01"
+          type="range"
+          value={layoutThickness}
+        />
+
+        <output>{layoutThickness.toFixed(2)}</output>
+      </label>
+
+      <label className="range-field">
+        <span>Coverage</span>
+
+        <input
+          max="1.75"
+          min="0.5"
+          onChange={(event) => setLayoutCoverage(event.target.valueAsNumber)}
+          step="0.05"
+          type="range"
+          value={layoutCoverage}
+        />
+
+        <output>{layoutCoverage.toFixed(2)}</output>
+      </label>
 
       <label className="compact-field">
         <span>Seed</span>
+
         <input
           min="1"
           onChange={(event) => setSeed(event.target.valueAsNumber || 1)}
@@ -127,20 +214,23 @@ export function FoliageLayerWorkspace() {
 
       <label className="range-field">
         <span>Density</span>
+
         <input
           aria-label="Vine density"
-          max="2.4"
+          max="3"
           min="0.35"
           onChange={(event) => setDensity(event.target.valueAsNumber)}
           step="0.05"
           type="range"
           value={density}
         />
+
         <output>{density.toFixed(2)}</output>
       </label>
 
       <label className="range-field">
         <span>Variation</span>
+
         <input
           aria-label="Vine variation"
           max="1"
@@ -150,11 +240,13 @@ export function FoliageLayerWorkspace() {
           type="range"
           value={variation}
         />
+
         <output>{variation.toFixed(2)}</output>
       </label>
 
       <label className="range-field">
         <span>Sweep</span>
+
         <input
           aria-label="Pointer sweep strength"
           max="24"
@@ -166,6 +258,7 @@ export function FoliageLayerWorkspace() {
           type="range"
           value={interactionStrength}
         />
+
         <output>{interactionStrength}</output>
       </label>
 
@@ -175,6 +268,7 @@ export function FoliageLayerWorkspace() {
           onChange={(event) => setDebug(event.target.checked)}
           type="checkbox"
         />
+
         <span>Debug</span>
       </label>
     </>
@@ -186,7 +280,7 @@ export function FoliageLayerWorkspace() {
       family="WebGL 2 · path-driven vine growth"
       parameters={PARAMETERS}
       stageClassName="foliage-stage"
-      summary="Independent main vines carry arc-spaced growth nodes, lightweight branches, flowers and leaves."
+      summary="Wall-clinging vine runners grow secondary branches with layered flowers and leaves."
       title="Vine Foliage Layer"
     >
       <SinglePathPreview
@@ -195,17 +289,48 @@ export function FoliageLayerWorkspace() {
         variation={variation}
       />
 
-      <div className="foliage-composition" data-mode={mode}>
-        <div className="foliage-background" aria-hidden="true" />
+      <div className="foliage-composition">
+        <div aria-hidden="true" className="foliage-background" />
 
-        <div className="foliage-backdrop" aria-hidden="true">
+        {/*
+         * Effect layer.
+         *
+         * This must remain below actual DOM content.
+         * CSS should also set pointer-events: none.
+         */}
+        <VineLayer
+          aria-label="Interactive Bougainvillea vine wall"
+          assets={bougainvilleaVineAssets}
+          area={VINE_AREA}
+          className="foliage-canvas"
+          debug={debug}
+          density={density}
+          growth={VINE_GROWTH}
+          interaction={interaction}
+          layout={vineLayout}
+          network={VINE_NETWORK}
+          onError={handleError}
+          quality="high"
+          seed={seed}
+          size={VINE_SIZE}
+          variation={variation}
+        />
+
+        <div aria-hidden="true" className="foliage-backdrop">
           <span>BOTANICAL / 07</span>
+
           <span>SAIGON · 2026</span>
         </div>
 
+        {/*
+         * Actual content always stays above the effect layer.
+         */}
         <div className="foliage-copy">
-          <p>Climbing color, shaped by motion.</p>
-          <h3>Bougainvillea</h3>
+          <p className="foliage-copy__eyebrow">
+            Climbing color, shaped by motion.
+          </p>
+
+          <h3 className="foliage-copy__title">Bougainvillea</h3>
 
           <button
             className="foliage-action"
@@ -223,23 +348,6 @@ export function FoliageLayerWorkspace() {
         </div>
 
         {error ? <p className="effect-error foliage-error">{error}</p> : null}
-
-        <VineLayer
-          aria-label="Interactive Bougainvillea vine wall"
-          assets={bougainvilleaVineAssets}
-          area={VINE_AREA}
-          className="foliage-canvas"
-          debug={debug}
-          density={density}
-          growth={VINE_GROWTH}
-          interaction={interaction}
-          network={VINE_NETWORK}
-          onError={handleError}
-          quality="high"
-          seed={seed}
-          size={VINE_SIZE}
-          variation={variation}
-        />
       </div>
     </WorkspaceScaffold>
   );

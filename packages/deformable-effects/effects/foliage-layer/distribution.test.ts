@@ -10,6 +10,8 @@ const CONFIG: VineDistributionConfig = {
   branchFlexibility: [0.8, 1.1],
   branchFlutter: [0.4, 0.8],
   branchScale: [0.9, 1.1],
+  mainBranchScale: [0.76, 0.94],
+  secondaryBranchScale: [1.08, 1.34],
   depthJitter: 5,
   flowerFlexibility: [1.1, 1.5],
   flowerFlutter: [1, 1.4],
@@ -23,7 +25,7 @@ const CONFIG: VineDistributionConfig = {
   secondaryLeafProbability: 0.3,
   seed: 77,
   structuralOverlap: 1.12,
-  variation: 1
+  variation: 1,
 };
 
 function vine(seed = 21, variation = 0.8) {
@@ -37,7 +39,7 @@ function vine(seed = 21, variation = 0.8) {
     pathCount: 1,
     seed,
     startPosition: () => new Vec3(-100, 0, 0),
-    variation
+    variation,
   });
   return buildVineGrowth(network, {
     branchProbability: 1,
@@ -46,7 +48,7 @@ function vine(seed = 21, variation = 0.8) {
     maxBranches: 20,
     seed,
     spacing: 28,
-    variation
+    variation,
   });
 }
 
@@ -56,7 +58,7 @@ describe("vine distribution", () => {
     const assets = resolveVineAssets({
       branches: [{ handle: "branch-a" }, { handle: "branch-b" }],
       flowers: [{ handle: "flower-a" }],
-      leaves: [{ handle: "leaf-a" }]
+      leaves: [{ handle: "leaf-a" }],
     });
     const first = buildVineDistribution(growth, assets, CONFIG);
     const second = buildVineDistribution(growth, assets, CONFIG);
@@ -67,29 +69,51 @@ describe("vine distribution", () => {
         handle: instance.resource.handle,
         kind: instance.kind,
         orientationOffset: instance.orientationOffset,
-        scale: instance.scale
+        scale: instance.scale,
       }));
 
     expect(summarize(first)).toEqual(summarize(second));
   });
 
-  it("places branch billboards on secondary chains, never directly on the main vine", () => {
+  it("creates structural branch skin along main-vine path segments", () => {
     const growth = vine();
+
     const distribution = buildVineDistribution(
       growth,
-      resolveVineAssets({ branches: [{ handle: "branch-a" }] }),
-      CONFIG
-    );
-    const branchInstances = distribution.instances.filter(
-      (instance) => instance.kind === "branch"
+      resolveVineAssets({
+        branches: [{ handle: "branch-a" }],
+      }),
+      CONFIG,
     );
 
-    expect(branchInstances).toHaveLength(growth.branches.length);
-    for (const instance of branchInstances) {
-      const branch = growth.branches[instance.branchId!]!;
-      expect(instance.from).toBe(branch.nodes[0]);
-      expect(instance.to).toBe(branch.nodes[branch.nodes.length - 1]);
-      expect(instance.anchor).toBeUndefined();
+    const structuralInstances = distribution.instances.filter(
+      (instance) =>
+        instance.kind === "branch" && instance.structuralRole === "main",
+    );
+
+    const expectedStructuralCount = growth.mainPaths.reduce(
+      (total, path) => total + Math.max(0, path.length - 1),
+      0,
+    );
+
+    expect(structuralInstances).toHaveLength(expectedStructuralCount);
+
+    expect(distribution.structuralCount).toBe(expectedStructuralCount);
+
+    for (const instance of structuralInstances) {
+      const path = growth.mainPaths[instance.pathIndex];
+
+      expect(path).toBeDefined();
+
+      const fromIndex = path?.indexOf(instance.from) ?? -1;
+
+      expect(fromIndex).toBeGreaterThanOrEqual(0);
+
+      expect(path?.[fromIndex + 1]).toBe(instance.to);
+
+      expect(instance.branchId).toBeNull();
+
+      expect(instance.structuralRole).toBe("main");
     }
   });
 
@@ -100,18 +124,20 @@ describe("vine distribution", () => {
       resolveVineAssets({
         branches: [{ handle: "branch-a" }],
         flowers: [{ handle: "flower-a" }],
-        leaves: [{ handle: "leaf-a" }]
+        leaves: [{ handle: "leaf-a" }],
       }),
-      CONFIG
+      CONFIG,
     );
     const accents = distribution.instances.filter(
-      (instance) => instance.kind !== "branch"
+      (instance) => instance.kind !== "branch",
     );
 
     expect(accents.some((instance) => instance.kind === "flower")).toBe(true);
     expect(accents.some((instance) => instance.kind === "leaf")).toBe(true);
     for (const instance of accents) {
-      expect(instance.anchor).toBe(growth.growthNodes[instance.growthNodeId]?.carrier);
+      expect(instance.anchor).toBe(
+        growth.growthNodes[instance.growthNodeId]?.carrier,
+      );
     }
   });
 
@@ -120,26 +146,41 @@ describe("vine distribution", () => {
     const minimal = buildVineDistribution(
       growth,
       resolveVineAssets({ branches: [{ handle: "branch-a" }] }),
-      CONFIG
+      CONFIG,
     );
     const rich = buildVineDistribution(
       growth,
       resolveVineAssets({
         branches: Array.from({ length: 8 }, (_, index) => ({
-          handle: `branch-${index}`
+          handle: `branch-${index}`,
         })),
         flowers: [{ handle: "flower-a" }],
-        leaves: [{ handle: "leaf-a" }]
+        leaves: [{ handle: "leaf-a" }],
       }),
-      CONFIG
+      CONFIG,
     );
 
-    expect(minimal.instances.filter((instance) => instance.kind === "branch")).toHaveLength(
-      growth.branches.length
+    const expectedStructuralCount = growth.mainPaths.reduce(
+      (total, path) => total + Math.max(0, path.length - 1),
+      0,
     );
-    expect(rich.instances.filter((instance) => instance.kind === "branch")).toHaveLength(
-      growth.branches.length
-    );
+
+    expect(
+      minimal.instances.filter(
+        (instance) =>
+          instance.kind === "branch" && instance.structuralRole === "main",
+      ),
+    ).toHaveLength(expectedStructuralCount);
+
+    expect(
+      rich.instances.filter(
+        (instance) =>
+          instance.kind === "branch" && instance.structuralRole === "main",
+      ),
+    ).toHaveLength(expectedStructuralCount);
+
+    expect(minimal.structuralCount).toBe(rich.structuralCount);
+
     expect(growth.topology.nodes.length).toBeGreaterThan(0);
   });
 
@@ -150,13 +191,21 @@ describe("vine distribution", () => {
       resolveVineAssets({
         branches: [{ handle: "branch-a", metadata: { greenMask: true } }],
         flowers: [{ handle: "flower-a" }],
-        leaves: [{ handle: "leaf-a" }]
+        leaves: [{ handle: "leaf-a" }],
       }),
-      { ...CONFIG, maxInstances: 4 }
+      { ...CONFIG, maxInstances: 4 },
     );
 
-    expect(distribution.instances).toHaveLength(4);
-    expect(distribution.instances.every((instance) => instance.kind === "branch")).toBe(true);
-    expect(distribution.instances.every((instance) => instance.greenMask)).toBe(true);
+    expect(distribution.structuralCount).toBeGreaterThan(4);
+
+    expect(distribution.instances).toHaveLength(distribution.structuralCount);
+
+    expect(
+      distribution.instances.every((instance) => instance.kind === "branch"),
+    ).toBe(true);
+
+    expect(distribution.instances.every((instance) => instance.greenMask)).toBe(
+      true,
+    );
   });
 });

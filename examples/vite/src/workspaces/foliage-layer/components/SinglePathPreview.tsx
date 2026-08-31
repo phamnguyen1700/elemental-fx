@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 
 import {
-  Vec3,
   type NetworksConfig,
   type VineGrowthConfig,
 } from "@elemental-fx/deformable-effects";
@@ -12,36 +11,48 @@ import { bougainvilleaVineAssets } from "../../../assets/foliage/bougainvillea";
 const SINGLE_VINE_AREA = {
   alignX: "center",
   alignY: "center",
-  height: 0.72,
-  width: 0.92,
+  height: 0.68,
+  width: 0.72,
 } as const;
 
 const SINGLE_VINE_SIZE = {
-  branch: 1.5,
-  flower: 3,
-  leaf: 2,
+  branch: 1,
+
+  mainBranch: 0.92,
+
+  secondaryBranch: 1.08,
+
+  flower: 1.1,
+
+  leaf: 1,
 } as const;
 
 const SINGLE_VINE_NETWORK = {
   anchorEvery: 3,
-  curvature: 0.5,
-  endPosition: ({ bounds }) =>
-    new Vec3(bounds.max.x, (bounds.min.y + bounds.max.y) * 0.5, 0),
-  nodesPerPath: 6,
-  orientationVariation: 0,
+
+  curvature: 0.58,
+
+  nodesPerPath: 8,
+
+  orientationVariation: 0.45,
+
   pathCount: 1,
-  pathLengthVariation: 0,
-  startPosition: ({ bounds }) =>
-    new Vec3(bounds.min.x, (bounds.min.y + bounds.max.y) * 0.5, 0),
+
+  pathLengthVariation: 0.12,
 } satisfies Partial<NetworksConfig>;
 
 const SINGLE_VINE_GROWTH = {
-  branchProbability: 1,
-  flowerProbability: 2,
-  leafProbability: 1.5,
-  maxBranches: 16,
+  branchProbability: 0.9,
+
+  flowerProbability: 0.55,
+
+  leafProbability: 0.75,
+
+  maxBranches: 8,
+
   maxGrowthNodes: 10,
-  spacing: 10,
+
+  spacing: 14,
 } satisfies Partial<VineGrowthConfig>;
 
 interface SinglePathPreviewProps {
@@ -56,7 +67,9 @@ export function SinglePathPreview({
   interactionStrength,
 }: SinglePathPreviewProps) {
   const [debug, setDebug] = useState(true);
+
   const [error, setError] = useState<string | null>(null);
+
   const interaction = useMemo(
     () => ({
       depthFalloff: 0.018,
@@ -67,6 +80,7 @@ export function SinglePathPreview({
     }),
     [interactionStrength],
   );
+
   const handleError = useCallback((nextError: Error) => {
     setError(nextError.message);
   }, []);
@@ -74,27 +88,27 @@ export function SinglePathPreview({
   return (
     <section className="single-vine-probe">
       <header className="single-vine-probe__header">
-        <div>
-          <strong>Single Vine / Asset Probe</strong>
-        </div>
+        <strong className="single-vine-probe__title">
+          Single Vine / Asset Probe
+        </strong>
+
         <label className="toggle-control">
           <input
             checked={debug}
             onChange={(event) => setDebug(event.target.checked)}
             type="checkbox"
           />
+
           <span>Debug</span>
         </label>
       </header>
 
       <div className="single-vine-probe__stage">
-        {error ? (
-          <p className="effect-error single-vine-probe__error">{error}</p>
-        ) : null}
         <VineLayer
           aria-label="Single vine growth preview"
           assets={bougainvilleaVineAssets}
           area={SINGLE_VINE_AREA}
+          className="single-vine-probe__canvas"
           debug={debug}
           density={1}
           growth={SINGLE_VINE_GROWTH}
@@ -106,6 +120,10 @@ export function SinglePathPreview({
           size={SINGLE_VINE_SIZE}
           variation={variation}
         />
+
+        {error ? (
+          <p className="effect-error single-vine-probe__error">{error}</p>
+        ) : null}
       </div>
     </section>
   );

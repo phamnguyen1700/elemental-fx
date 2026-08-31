@@ -33,31 +33,73 @@ export const bougainvilleaPreset: FoliagePreset = {
   },
   growth: {
     attachmentStiffness: 0.92,
-    branchAngle: [0.4, 1.16],
-    branchBendStiffness: 0.075,
-    branchCurvature: 0.36,
+
+    /**
+     * Secondary branches should fan naturally away from the main runners
+     * without becoming perpendicular decorative spikes.
+     */
+    branchAngle: [0.32, 1.04],
+
+    branchBendStiffness: 0.07,
+
+    /**
+     * Slightly more curvature helps short offshoots read as organic wall growth.
+     */
+    branchCurvature: 0.42,
+
     branchDamping: 0.958,
-    branchLength: [26, 48],
-    branchMass: 0.72,
+
+    /**
+     * More numerous, shorter secondary branches.
+     */
+    branchLength: [18, 36],
+
+    branchMass: 0.68,
     branchNodeCount: [3, 5],
-    branchProbability: 0.68,
-    branchRootStiffness: 0.13,
-    branchStiffness: 0.63,
+
+    /**
+     * The visual mass should come from secondary growth rather than adding
+     * more independent main runners.
+     */
+    branchProbability: 0.78,
+
+    branchRootStiffness: 0.12,
+    branchStiffness: 0.6,
+
     carrierDamping: 0.965,
     carrierMass: 0.8,
+
     density: 1,
-    densityModulation: 0.2,
+
+    /**
+     * More local density variation prevents uniformly decorated vines.
+     */
+    densityModulation: 0.28,
+
     depthOffset: 5,
-    flexibility: 1.12,
-    flowerProbability: 0.34,
-    leafProbability: 0.58,
-    maxBranches: 240,
-    maxGrowthNodes: 420,
+    flexibility: 1.16,
+
+    /**
+     * Main-runner attachment density stays moderate. Secondary attachments
+     * receive their own probabilities in distribution.
+     */
+    flowerProbability: 0.26,
+    leafProbability: 0.5,
+
+    maxBranches: 320,
+    maxGrowthNodes: 520,
+
     seed: 5037,
-    spacing: 29,
-    spacingJitter: 0.2,
+
+    /**
+     * More growth sites per runner.
+     */
+    spacing: 24,
+    spacingJitter: 0.3,
+
     variation: 0.85,
   },
+
   interaction: {
     depthFalloff: 0.018,
     lift: 14,
@@ -65,31 +107,65 @@ export const bougainvilleaPreset: FoliagePreset = {
     strength: 16,
     velocityScale: 2.1,
   },
+
   wind: null,
   gravity: null,
   depth: {
     pointerPlane: 28,
     spread: 58,
   },
+
   distribution: {
-    branchFlexibility: [0.8, 1.12],
-    branchFlutter: [0.48, 0.82],
+    branchFlexibility: [0.8, 1.14],
+    branchFlutter: [0.46, 0.84],
+
+    /**
+     * Common structural-asset scale.
+     */
     branchScale: [0.88, 1.08],
+
+    /**
+     * Main runners should remain readable as the structural backbone without
+     * visually dominating the secondary growth.
+     */
+    mainBranchScale: [0.76, 0.94],
+
+    /**
+     * Secondary branches are deliberately more visible so the layer reads as
+     * a wall-clinging network rather than a few large decorated cables.
+     */
+    secondaryBranchScale: [1.08, 1.34],
+
     depthJitter: 5,
+
     flowerFlexibility: [1.05, 1.42],
     flowerFlutter: [0.9, 1.34],
     flowerScale: [12, 18],
+
     lateralSpread: 3.5,
+
     leafFlexibility: [0.86, 1.24],
     leafFlutter: [0.72, 1.12],
     leafScale: [10, 15],
-    maxInstances: 1200,
-    secondaryFlowerProbability: 0.16,
-    secondaryLeafProbability: 0.24,
+
+    /**
+     * Secondary structural skin now contributes many more instances.
+     */
+    maxInstances: 1600,
+
+    /**
+     * Accent secondary growth more strongly than main runners.
+     */
+    secondaryFlowerProbability: 0.24,
+    secondaryLeafProbability: 0.42,
+
     seed: 5000,
+
     structuralOverlap: 1.14,
+
     variation: 0.85,
   },
+
   render: {
     alphaCutoff: 0.035,
     ambientLight: 0.72,

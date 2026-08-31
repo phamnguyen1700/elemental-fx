@@ -34,10 +34,8 @@ export const VineLayer = forwardRef<HTMLCanvasElement, VineLayerProps>(
       interactionTarget,
       network,
       growth,
-
-      // Hanging strands
+      layout,
       hanging,
-
       interaction,
       wind,
       gravity,
@@ -68,7 +66,7 @@ export const VineLayer = forwardRef<HTMLCanvasElement, VineLayerProps>(
 
         ...(network === undefined ? {} : { network }),
         ...(growth === undefined ? {} : { growth }),
-
+        ...(layout === undefined ? {} : { layout }),
         // Forward hanging config into the core effect.
         ...(hanging === undefined ? {} : { hanging }),
 
@@ -90,9 +88,8 @@ export const VineLayer = forwardRef<HTMLCanvasElement, VineLayerProps>(
         distribution,
         gravity,
         growth,
-
+        layout,
         hanging,
-
         interaction,
         interactionTarget,
         network,

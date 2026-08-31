@@ -5,7 +5,7 @@ import { createFoliagePathEndpoints } from "./path-layout";
 
 const BOUNDS = {
   min: new Vec3(-120, -70, -30),
-  max: new Vec3(120, 70, 30)
+  max: new Vec3(120, 70, 30),
 };
 
 describe("foliage path layout", () => {
@@ -30,15 +30,60 @@ describe("foliage path layout", () => {
     const directions = Array.from({ length: 20 }, (_, pathIndex) => {
       const { start, end } = createFoliagePathEndpoints(
         { bounds: BOUNDS, pathCount: 20, pathIndex },
-        { seed: 5000, variation: 0.85 }
+        { seed: 5000, variation: 0.85 },
       );
       const dx = Math.abs(end.x - start.x) / (BOUNDS.max.x - BOUNDS.min.x);
       const dy = Math.abs(end.y - start.y) / (BOUNDS.max.y - BOUNDS.min.y);
-      return dx > dy * 1.5 ? "horizontal" : dy > dx * 1.5 ? "vertical" : "diagonal";
+      return dx > dy * 1.5
+        ? "horizontal"
+        : dy > dx * 1.5
+          ? "vertical"
+          : "diagonal";
     });
 
     expect(directions).toContain("horizontal");
     expect(directions).toContain("vertical");
     expect(directions).toContain("diagonal");
+  });
+  it("uses horizontal traversal inside top regions", () => {
+    const { start, end } = createFoliagePathEndpoints(
+      {
+        bounds: BOUNDS,
+        pathCount: 8,
+        pathIndex: 2,
+      },
+      {
+        role: "top",
+        seed: 5000,
+        variation: 0.85,
+      },
+    );
+
+    const dx = Math.abs(end.x - start.x);
+
+    const dy = Math.abs(end.y - start.y);
+
+    expect(dx).toBeGreaterThan(dy);
+  });
+
+  it("starts corner paths from an outer corner edge", () => {
+    const { start } = createFoliagePathEndpoints(
+      {
+        bounds: BOUNDS,
+        pathCount: 8,
+        pathIndex: 0,
+      },
+      {
+        role: "top-left",
+        seed: 5000,
+        variation: 0.85,
+      },
+    );
+
+    const touchesLeft = Math.abs(start.x - BOUNDS.min.x) < 0.0001;
+
+    const touchesTop = Math.abs(start.y - BOUNDS.min.y) < 0.0001;
+
+    expect(touchesLeft || touchesTop).toBe(true);
   });
 });

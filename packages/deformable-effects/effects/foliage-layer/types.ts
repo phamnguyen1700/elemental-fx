@@ -1,4 +1,5 @@
 import type { Vec3 } from "../../core/math/vec3";
+import type { EffectLayoutOptions } from "@elemental-fx/effect-layout";
 import type { VisualResource, WeightedResource } from "../../core/resources";
 import type { Node } from "../../engines/constraint-graph";
 import type { PointerSweepConfig, WindForceConfig } from "../../forces";
@@ -43,6 +44,48 @@ export interface FoliageDepthConfig {
   pointerPlane: number;
 }
 
+/**
+ * Spatial layouts supported by VineLayer.
+ *
+ * VineLayer uses one biological growth model: wall-cling.
+ * Layout only controls where that growth is distributed.
+ *
+ * Dense compositions should be produced through density, growth tuning,
+ * assets, or multiple stacked VineLayer instances rather than a separate
+ * "fill" growth behavior.
+ */
+export type VineLayoutMode = "cover" | "corners" | "top";
+
+export type VineCornerShape = "rect" | "round";
+
+export type VineLayoutOptions =
+  | (Omit<EffectLayoutOptions, "mode"> & {
+      mode: "cover";
+    })
+  | (Omit<EffectLayoutOptions, "mode"> & {
+      mode: "top";
+    })
+  | (Omit<EffectLayoutOptions, "mode"> & {
+      mode: "corners";
+
+      /**
+       * Corner spatial-field family.
+       *
+       * rect:
+       * elongated rectangle
+       * → square corner
+       * → full area
+       *
+       * round:
+       * ellipse
+       * → circle
+       * → full area
+       */
+      shape?: VineCornerShape;
+    });
+
+export type VineLayout = VineLayoutMode | VineLayoutOptions;
+
 export interface VineHangingConfig {
   enabled?: boolean;
 
@@ -54,6 +97,11 @@ export interface VineHangingConfig {
 
   rootJitter?: Vec3;
 
+  /**
+   * Gravity applied only to hanging strand nodes.
+   */
+  gravity?: Vec3;
+
   segmentStiffness?: number;
   bendStiffness?: number;
 }
@@ -63,7 +111,26 @@ export interface VineDistributionConfig {
   structuralOverlap: number;
   lateralSpread: number;
   depthJitter: number;
+  /**
+   * Base structural branch scale.
+   *
+   * Kept as the common/fallback scale for structural assets.
+   */
   branchScale: readonly [number, number];
+
+  /**
+   * Scale multiplier for primary wall-clinging runners.
+   */
+  mainBranchScale: readonly [number, number];
+
+  /**
+   * Scale multiplier for secondary biological branches.
+   *
+   * This can be larger than mainBranchScale so smaller offshoots remain
+   * visually present instead of disappearing behind foliage.
+   */
+  secondaryBranchScale: readonly [number, number];
+
   flowerScale: readonly [number, number];
   leafScale: readonly [number, number];
   branchFlexibility: readonly [number, number];
@@ -100,9 +167,24 @@ export interface FoliageRenderConfig {
 export type VineSizeValue = number | readonly [number, number];
 
 export interface VineSize {
+  /**
+   * Scales all structural branch assets.
+   */
   branch?: VineSizeValue;
+
+  /**
+   * Additional scale applied to primary runners.
+   */
+  mainBranch?: VineSizeValue;
+
+  /**
+   * Additional scale applied to secondary branches.
+   */
+  secondaryBranch?: VineSizeValue;
+
   flower?: VineSizeValue;
   leaf?: VineSizeValue;
+
   /** @deprecated Use `branch`. */
   base?: VineSizeValue;
 }
@@ -138,6 +220,7 @@ export interface VineLayerConfig extends FoliagePresetOverrides {
   assets: VineAssets;
   preset?: FoliagePreset;
   quality?: DeformableQuality;
+  layout?: VineLayout;
   hanging?: VineHangingConfig;
   area?: EffectArea;
   seed?: number;
