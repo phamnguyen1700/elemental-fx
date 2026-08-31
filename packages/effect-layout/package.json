@@ -1,0 +1,36 @@
+{
+  "name": "@elemental-fx/effect-layout",
+  "version": "0.1.2",
+  "description": "Engine-agnostic normalized layout primitives for Elemental FX effects.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/phamnguyen1700/elemental-fx.git",
+    "directory": "packages/effect-layout"
+  },
+  "homepage": "https://github.com/phamnguyen1700/elemental-fx#readme",
+  "bugs": {
+    "url": "https://github.com/phamnguyen1700/elemental-fx/issues"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup index.ts --format esm,cjs --dts --clean",
+    "clean": "rimraf dist",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
